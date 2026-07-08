@@ -8,7 +8,7 @@ import {
   ExplainResponse,
 } from './types';
 
-const API_BASE = typeof import.meta.env.VITE_API_BASE_URL === 'string' ? import.meta.env.VITE_API_BASE_URL : 'http://localhost:8000';
+const API_BASE = (typeof import.meta.env.VITE_API_BASE_URL === 'string' && import.meta.env.VITE_API_BASE_URL !== '') ? import.meta.env.VITE_API_BASE_URL : 'https://dependable-fulfillment-production-5178.up.railway.app';
 
 let logoutHandler: (() => void) | null = null;
 

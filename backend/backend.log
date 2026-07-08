@@ -1,0 +1,45 @@
+INFO:     Started server process [86358]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     212.13.150.234:0 - "GET / HTTP/1.1" 200 OK
+INFO:     212.13.150.234:0 - "GET /assets/index-D0oE9E5j.js HTTP/1.1" 200 OK
+INFO:     212.13.150.234:0 - "GET /assets/index-CYRxStGw.css HTTP/1.1" 200 OK
+INFO:     212.13.150.234:0 - "GET /favicon.svg HTTP/1.1" 200 OK
+INFO:     212.13.150.234:0 - "POST /auth/login HTTP/1.1" 200 OK
+INFO:     212.13.150.234:0 - "GET /auth/me HTTP/1.1" 200 OK
+Failed to load ML model from /Users/aldiyardyussenov/.gemini/antigravity/scratch/heparadar/ml/models/greyzone_model.pkl — falling back to FIB-4-based risk.
+Traceback (most recent call last):
+  File "/Users/aldiyardyussenov/.gemini/antigravity/scratch/heparadar/backend/app/services/ml_infer.py", line 74, in load_model
+    model = pickle.load(f)
+            ^^^^^^^^^^^^^^
+  File "/Users/aldiyardyussenov/.gemini/antigravity/scratch/heparadar/backend/.venv/lib/python3.12/site-packages/xgboost/__init__.py", line 6, in <module>
+    from . import (
+  File "/Users/aldiyardyussenov/.gemini/antigravity/scratch/heparadar/backend/.venv/lib/python3.12/site-packages/xgboost/collective.py", line 14, in <module>
+    from .core import _LIB, _check_call, build_info, c_str, make_jcargs, py_str
+  File "/Users/aldiyardyussenov/.gemini/antigravity/scratch/heparadar/backend/.venv/lib/python3.12/site-packages/xgboost/core.py", line 39, in <module>
+    from ._c_api import (
+  File "/Users/aldiyardyussenov/.gemini/antigravity/scratch/heparadar/backend/.venv/lib/python3.12/site-packages/xgboost/_c_api.py", line 184, in <module>
+    _LIB = _load_lib()
+           ^^^^^^^^^^^
+  File "/Users/aldiyardyussenov/.gemini/antigravity/scratch/heparadar/backend/.venv/lib/python3.12/site-packages/xgboost/_c_api.py", line 148, in _load_lib
+    raise XGBoostError(f"""
+xgboost._c_api.XGBoostError: 
+XGBoost Library (libxgboost.dylib) could not be loaded.
+Likely causes:
+  * OpenMP runtime is not installed
+    - vcomp140.dll or libgomp-1.dll for Windows
+    - libomp.dylib for Mac OSX
+    - libgomp.so for Linux and other UNIX-like OSes
+    Mac OSX users: Run `brew install libomp` to install OpenMP runtime.
+
+  * You are running 32-bit Python on a 64-bit OS
+
+Error message(s): ["dlopen(/Users/aldiyardyussenov/.gemini/antigravity/scratch/heparadar/backend/.venv/lib/python3.12/site-packages/xgboost/lib/libxgboost.dylib, 0x0006): Library not loaded: @rpath/libomp.dylib\n  Referenced from: <4E82201A-ED82-3451-AD25-7886C77941A1> /Users/aldiyardyussenov/.gemini/antigravity/scratch/heparadar/backend/.venv/lib/python3.12/site-packages/xgboost/lib/libxgboost.dylib\n  Reason: tried: '/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/opt/homebrew/opt/libomp/lib/libomp.dylib' (no such file), '/Users/aldiyardyussenov/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/libomp.dylib' (no such file), '/Users/aldiyardyussenov/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/libomp.dylib' (no such file)"]
+
+INFO:     212.13.150.234:0 - "POST /cohort/scan HTTP/1.1" 200 OK
+INFO:     212.13.150.234:0 - "GET /cohort/worklist?page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     212.13.150.234:0 - "GET /patients/13 HTTP/1.1" 200 OK
+INFO:     212.13.150.234:0 - "GET /patients/13/explain HTTP/1.1" 200 OK
+INFO:     212.13.150.234:0 - "GET /cohort/worklist?page=1&page_size=20 HTTP/1.1" 200 OK
+INFO:     149.154.161.252:0 - "GET /worklist HTTP/1.1" 200 OK
