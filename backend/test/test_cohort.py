@@ -75,3 +75,32 @@ def test_patient_card_returns_labs_and_scores(client):
 def test_patient_card_404_for_unknown_patient(client):
     response = client.get("/patients/999999")
     assert response.status_code == 404
+
+
+def test_scan_only_assigns_ml_risk_to_grey_zone_patients(client, monkeypatch, tmp_path):
+    from ml.src.export import export_placeholder
+
+    from app.services import ml_infer
+
+    paths = export_placeholder(tmp_path / "artifacts")
+    monkeypatch.setattr(ml_infer.settings, "model_path", str(paths["model"]))
+    monkeypatch.setattr(ml_infer.settings, "feature_order_path", str(paths["feature_order"]))
+
+    _ingest_sample(client)
+    client.post("/cohort/scan")
+
+    from app.db.session import SessionLocal
+    from app.models.score import Score
+
+    db = SessionLocal()
+    try:
+        scores = db.query(Score).all()
+    finally:
+        db.close()
+
+    assert any(s.zone == "grey" for s in scores)
+    for score in scores:
+        if score.zone == "grey":
+            assert score.ml_risk is not None
+        else:
+            assert score.ml_risk is None

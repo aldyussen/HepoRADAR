@@ -62,6 +62,55 @@ def needs_age_caveat(age: float | None) -> bool:
     return age is not None and age > settings.fib4_age_caveat_years
 
 
+def fib4_to_risk(fib4_val: float | None) -> float | None:
+    """Monotonic transform of FIB-4 onto [0, 1] — the mandatory ML fallback.
+
+    Centered on the grey zone's midpoint so low/high FIB-4 push toward 0/1
+    while grey-zone values stay near 0.5, matching the role a real model
+    would play once trained.
+    """
+    if fib4_val is None:
+        return None
+    midpoint = (settings.fib4_low_max + settings.fib4_high_min) / 2
+    return 1 / (1 + math.exp(-2.0 * (fib4_val - midpoint)))
+
+
+# feature -> (direction that indicates risk, threshold)
+_RULE_BASED_FACTOR_RULES = {
+    "ast": ("high", 40.0),
+    "alt": ("high", 40.0),
+    "plt": ("low", 150.0),
+    "albumin": ("low", 3.5),
+    "bilirubin": ("high", 1.2),
+}
+
+
+def rule_based_factors(row: dict, max_factors: int = 3) -> list[dict]:
+    """Fallback explanation when no SHAP explainer is available.
+
+    Flags analytes past their normal-range threshold, ranked by how far past
+    it they are. Not a real attribution — a readable substitute so `/explain`
+    always returns something, e.g. "FIB-4 driven by low platelets + high AST".
+    """
+    factors = []
+    for feature, (direction, threshold) in _RULE_BASED_FACTOR_RULES.items():
+        value = row.get(feature)
+        if value is None:
+            continue
+        if direction == "high" and value > threshold:
+            magnitude = (value - threshold) / threshold
+        elif direction == "low" and value < threshold:
+            magnitude = (threshold - value) / threshold
+        else:
+            continue
+        factors.append(
+            {"feature": feature, "value": value, "shap": round(magnitude, 3), "direction": "increases risk"}
+        )
+
+    factors.sort(key=lambda f: f["shap"], reverse=True)
+    return factors[:max_factors]
+
+
 def score_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """Vectorized FIB-4/APRI/De Ritis/zone for the cohort scan endpoint.
 
