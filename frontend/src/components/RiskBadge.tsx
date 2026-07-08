@@ -13,6 +13,8 @@ export function RiskBadge({ zone }: RiskBadgeProps) {
       return <Badge className="bg-amber-500 hover:bg-amber-600">Серая зона</Badge>;
     case 'low':
       return <Badge className="bg-emerald-500 hover:bg-emerald-600">Низкий</Badge>;
+    case 'n/a':
+      return <Badge className="bg-slate-300 text-slate-700 hover:bg-slate-400">Н/Д</Badge>;
     default:
       return <Badge className="bg-slate-500 hover:bg-slate-600">Неизвестно</Badge>;
   }

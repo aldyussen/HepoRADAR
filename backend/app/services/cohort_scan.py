@@ -31,26 +31,56 @@ def run_cohort_scan(db: Session) -> ScanSummary:
         return ScanSummary(total=0, low=0, grey=0, high=0, lost_count=0)
 
     labs_df = pd.DataFrame(labs, columns=["patient_id", "analyte", "value", "date"])
-    wide = labs_df.pivot_table(index=["patient_id", "date"], columns="analyte", values="value", aggfunc="first")
-    wide = wide.reset_index()
+    labs_df["date"] = pd.to_datetime(labs_df["date"])
+    labs_df = labs_df.sort_values(["patient_id", "date"])
+
+    # Keep the latest of each analyte per patient
+    latest_labs = labs_df.drop_duplicates(subset=["patient_id", "analyte"], keep="last")
+
+    wide = latest_labs.pivot(index="patient_id", columns="analyte", values="value").reset_index()
+
     for analyte in ANALYTES_FOR_FEATURES:
         if analyte not in wide.columns:
             wide[analyte] = pd.NA
 
-    complete = wide.dropna(subset=list(REQUIRED_ANALYTES)).copy()
+    # Also compute date difference
+    dates_wide = latest_labs.pivot(index="patient_id", columns="analyte", values="date").reset_index()
+    # Find min and max date among required analytes
+    req_cols = [c for c in REQUIRED_ANALYTES if c in dates_wide.columns]
+    dates_wide["min_date"] = dates_wide[req_cols].min(axis=1)
+    dates_wide["max_date"] = dates_wide[req_cols].max(axis=1)
+    dates_wide["date_diff"] = (dates_wide["max_date"] - dates_wide["min_date"]).dt.days
+    dates_wide["date"] = dates_wide["max_date"]
+
+    complete = pd.merge(wide, dates_wide[["patient_id", "date", "date_diff"]], on="patient_id")
+
     if complete.empty:
         return ScanSummary(total=0, low=0, grey=0, high=0, lost_count=0)
 
-    complete["date"] = pd.to_datetime(complete["date"])
-    latest = complete.sort_values("date").groupby("patient_id", as_index=False).last()
-
-    latest["age"] = latest["patient_id"].map(lambda pid: patient_by_id[pid].age)
-    latest["sex"] = latest["patient_id"].map(lambda pid: patient_by_id[pid].sex)
-    latest = latest.rename(
+    complete["age"] = complete["patient_id"].map(lambda pid: patient_by_id[pid].age)
+    complete["sex"] = complete["patient_id"].map(lambda pid: patient_by_id[pid].sex)
+    complete = complete.rename(
         columns={"AST": "ast", "ALT": "alt", "PLT": "plt", "BILIRUBIN": "bilirubin", "ALBUMIN": "albumin"}
     )
 
-    scored = score_dataframe(latest)
+    scored = score_dataframe(complete)
+    
+    # Add quality flags for date differences > 90 days
+    mask_diff = complete["date_diff"] > 90
+    if mask_diff.any():
+        for idx in complete[mask_diff].index:
+            current = scored.at[idx, "quality_flags"]
+            flag = "разные_даты_анализов"
+            scored.at[idx, "quality_flags"] = flag if not current else f"{current}, {flag}"
+            
+    # Add quality flags for missing analytes (or nullified due to anomaly)
+    for req in ("ast", "alt", "plt"):
+        mask_missing = complete[req].isna()
+        if mask_missing.any():
+            for idx in complete[mask_missing].index:
+                current = scored.at[idx, "quality_flags"]
+                flag = f"нет_{req.upper()}_или_аномалия"
+                scored.at[idx, "quality_flags"] = flag if not current else f"{current}, {flag}"
 
     scored["ml_risk"] = None
     grey_mask = scored["zone"] == "grey"

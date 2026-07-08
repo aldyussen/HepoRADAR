@@ -125,9 +125,11 @@ def ingest_csv(file: IO | str, db: Session) -> IngestReport:
             present_analytes += 1
 
             low, high = ANALYTES[analyte]["range"]
+            lab_quality_flag = None
             if value < low or value > high:
                 quality_flags[f"{analyte}_out_of_range"] += 1
-                continue
+                lab_quality_flag = f"аномальное_значение"
+                value = None
 
             existing_lab = (
                 db.query(Lab)
@@ -144,11 +146,13 @@ def ingest_csv(file: IO | str, db: Session) -> IngestReport:
                         unit=ANALYTES[analyte]["unit"],
                         date=row_date,
                         source_label=raw_col,
+                        quality_flag=lab_quality_flag,
                     )
                 )
             else:
                 existing_lab.value = value
                 existing_lab.source_label = raw_col
+                existing_lab.quality_flag = lab_quality_flag
             labs_ingested += 1
 
         for required in ("AST", "ALT", "PLT"):

@@ -25,7 +25,7 @@ ANALYTES: dict[str, dict] = {
     "PLT": {
         "loinc": "777-3",
         "unit": "10^9/L",
-        "range": (0, 2000),
+        "range": (10, 1000),
         "aliases": [
             "plt", "platelets", "platelet count", "platelet",
             "тромбоциты",

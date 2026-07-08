@@ -146,4 +146,12 @@ def score_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     out["apri"] = apri_vals
     out["de_ritis"] = de_ritis_vals
     out["zone"] = zone_vals
+    out["quality_flags"] = ""
+    
+    # Age < 35 gate
+    mask_young = out["age"] < 35
+    if mask_young.any():
+        out.loc[mask_young, "zone"] = "n/a"
+        out.loc[mask_young, "quality_flags"] = "FIB-4 не валидирован <35 лет"
+        
     return out
