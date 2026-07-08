@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 export function Topbar() {
-  const { user, logout } = useAuth();
+  const { user, logout, login } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -27,7 +27,7 @@ export function Topbar() {
     const newRole = e.target.value;
     try {
       // @ts-ignore
-      await useAuth().login({ username: newRole, password: "123" });
+      await login({ username: newRole, password: "123" });
     } catch (e) {
       console.error(e);
     }
