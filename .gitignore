@@ -3,3 +3,7 @@ frontend/dist
 .DS_Store
 docs/hepa-radar-backend-ml-plan.md
 CLAUDE.md
+__pycache__/
+*.pyc
+backend/dev.db
+*.db
