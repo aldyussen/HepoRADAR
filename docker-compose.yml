@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: heparadar
+      POSTGRES_PASSWORD: heparadar
+      POSTGRES_DB: heparadar
+    ports:
+      - "5432:5432"
+    volumes:
+      - heparadar_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U heparadar"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      HEPARADAR_DATABASE_URL: postgresql+psycopg://heparadar:heparadar@db:5432/heparadar
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  heparadar_pgdata:
