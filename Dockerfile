@@ -1,0 +1,32 @@
+# Stage 1: Сборка фронтенда
+FROM node:20 AS frontend-builder
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ .
+# Отключаем VITE_API_BASE_URL, чтобы использовались относительные пути к нашему же бэкенду
+ENV VITE_API_BASE_URL=""
+RUN npm run build
+
+# Stage 2: Сборка бэкенда и объединение
+FROM python:3.12-slim
+WORKDIR /app
+
+# Устанавливаем зависимости для ML (XGBoost)
+RUN apt-get update && apt-get install -y libgomp1 && rm -rf /var/lib/apt/lists/*
+
+# Копируем зависимости
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Копируем код бэкенда
+COPY backend/app ./app
+COPY backend/ml ./ml
+
+# Копируем собранный фронтенд
+COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
+
+EXPOSE 8000
+
+# Запускаем сидер БД (создаст sqlite базу) и сам сервер FastAPI
+CMD ["sh", "-c", "HEPARADAR_DATABASE_URL='sqlite:///./backend.db' python -m app.db.seed && HEPARADAR_DATABASE_URL='sqlite:///./backend.db' uvicorn app.main:app --host 0.0.0.0 --port $PORT"]
