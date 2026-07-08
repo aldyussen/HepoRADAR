@@ -54,8 +54,6 @@ def worklist(
         if has_reflex:
             reflex_count += 1
             
-        if not score.is_lost:
-            continue
         if zone is not None and score.zone != zone:
             continue
         if age_min is not None and (patient.age is None or patient.age < age_min):
