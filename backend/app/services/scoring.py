@@ -12,8 +12,7 @@ import pandas as pd
 
 from app.config import settings
 
-Zone = Literal["low", "grey", "high"]
-
+Zone = Literal["low", "grey", "high", "n/a"]
 
 def fib4(age: float | None, ast: float | None, alt: float | None, plt: float | None) -> float | None:
     """FIB-4 = (age * AST) / (platelets * sqrt(ALT))."""
@@ -48,6 +47,8 @@ def zone(fib4_val: float | None, age: float | None = None) -> Zone | None:
     `age` is accepted for the >65 caveat noted in the plan but does not
     change the cutoffs here — standard adult cutoffs are used uniformly.
     """
+    if age is not None and age < 35:
+        return "n/a"
     if fib4_val is None:
         return None
     if fib4_val < settings.fib4_low_max:
@@ -146,4 +147,12 @@ def score_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     out["apri"] = apri_vals
     out["de_ritis"] = de_ritis_vals
     out["zone"] = zone_vals
+    out["quality_flags"] = ""
+    
+    # Age < 35 gate
+    mask_young = out["age"] < 35
+    if mask_young.any():
+        out.loc[mask_young, "zone"] = "n/a"
+        out.loc[mask_young, "quality_flags"] = "FIB-4 не валидирован <35 лет"
+        
     return out

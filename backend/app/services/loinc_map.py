@@ -25,7 +25,7 @@ ANALYTES: dict[str, dict] = {
     "PLT": {
         "loinc": "777-3",
         "unit": "10^9/L",
-        "range": (0, 2000),
+        "range": (10, 1000),
         "aliases": [
             "plt", "platelets", "platelet count", "platelet",
             "тромбоциты",
@@ -42,6 +42,18 @@ ANALYTES: dict[str, dict] = {
         "unit": "g/dL",
         "range": (0, 10),
         "aliases": ["albumin", "alb"],
+    },
+    "ANTI_HCV": {
+        "loinc": "13955-0",
+        "unit": "S/CO",
+        "range": (0, 100),
+        "aliases": ["anti-hcv", "hcv antibody", "hcv_ab", "hcv ab", "антитела к гепатиту с"],
+    },
+    "HCV_RNA": {
+        "loinc": "11011-4",
+        "unit": "IU/mL",
+        "range": (0, 100000000),
+        "aliases": ["hcv rna", "hcv-rna", "hcv_rna", "рнк гепатита с"],
     },
 }
 
