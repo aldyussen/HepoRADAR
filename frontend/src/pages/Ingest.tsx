@@ -23,14 +23,14 @@ export function Ingest() {
           <AlertOctagon className="w-8 h-8" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-slate-900">Демо-режим ролей</h2>
+          <h2 className="text-2xl font-bold text-slate-900">Доступ ограничен</h2>
           <p className="text-sm text-slate-500 max-w-sm mx-auto">
-            В демонстрационных целях импорт лабораторных данных (загрузка CSV) ограничен. Для выполнения этого действия требуются права роли <strong>Администратор</strong>.
+            Для загрузки лабораторных данных требуется роль <strong>Администратор (Admin)</strong>. Пожалуйста, обратитесь к ИТ-специалисту клиники.
           </p>
         </div>
         <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-left">
           <p className="text-xs text-slate-500 leading-relaxed">
-            <strong>Примечание:</strong> Полноценная аутентификация и проверка JWT-токенов на сервере подключаются на Фазе 6 (L6). Сейчас вы можете переключить активную роль на <strong>Администратор (Admin)</strong> в верхнем меню, чтобы протестировать импорт.
+            <strong>Подсказка для демо:</strong> Используйте переключатель ролей в верхнем меню, чтобы переключиться на роль <strong>Admin</strong> и протестировать импорт.
           </p>
         </div>
       </div>

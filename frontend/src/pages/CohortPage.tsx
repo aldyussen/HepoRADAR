@@ -125,13 +125,13 @@ export function CohortPage() {
         <Card className="decoration-red-500 decoration-2 border-t-2">
           <Text className="text-slate-500 text-xs font-semibold uppercase">Высокий риск</Text>
           <Title className="text-3xl font-bold mt-1 text-red-600">{summary.high}</Title>
-          <Text className="text-slate-400 text-xs mt-1">Доля: {getPercent(summary.high)} когорты</Text>
+          <Text className="text-slate-400 text-xs mt-1">Доля: {getPercent(summary.high)} от пациентов с FIB-4</Text>
         </Card>
 
         <Card className="decoration-amber-500 decoration-2 border-t-2">
           <Text className="text-slate-500 text-xs font-semibold uppercase">Серая зона</Text>
           <Title className="text-3xl font-bold mt-1 text-amber-600">{summary.grey}</Title>
-          <Text className="text-slate-400 text-xs mt-1">Доля: {getPercent(summary.grey)} когорты</Text>
+          <Text className="text-slate-400 text-xs mt-1">Доля: {getPercent(summary.grey)} от пациентов с FIB-4</Text>
         </Card>
 
         <Card className="decoration-indigo-500 decoration-2 border-t-2">
@@ -168,6 +168,11 @@ export function CohortPage() {
             colors={["red", "amber", "emerald"]}
             className="text-xs border-t pt-4"
           />
+          {summary.total > totalRisky && (
+            <div className="text-xs text-slate-400 mt-2 text-center">
+              {summary.total - totalRisky} пациентов — FIB-4 не применим (возраст &lt;35)
+            </div>
+          )}
         </Card>
 
         {/* Bar Chart: Risk Exact Counts */}

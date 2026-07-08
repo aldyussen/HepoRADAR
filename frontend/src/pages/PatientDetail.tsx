@@ -251,6 +251,7 @@ export function PatientDetail() {
                   <TableBody>
                     {[...patient.scores]
                       .sort((a, b) => b.lab_date.localeCompare(a.lab_date))
+                      .filter((score, index, self) => index === self.findIndex((s) => s.lab_date === score.lab_date))
                       .map((score, index) => (
                         <TableRow key={index}>
                           <TableCell className="font-mono text-xs">{score.lab_date}</TableCell>
@@ -258,7 +259,7 @@ export function PatientDetail() {
                           <TableCell className="font-medium">{score.fib4 !== null ? score.fib4.toFixed(2) : "—"}</TableCell>
                           <TableCell>{score.apri !== null ? score.apri.toFixed(2) : "—"}</TableCell>
                           <TableCell>{score.de_ritis !== null ? score.de_ritis.toFixed(2) : "—"}</TableCell>
-                          <TableCell>{score.ml_risk !== null ? (score.ml_risk * 100).toFixed(0) + "%" : "н/д"}</TableCell>
+                          <TableCell>{score.zone === "grey" ? (score.ml_risk !== null ? (score.ml_risk * 100).toFixed(0) + "%" : "н/д") : "Не применялась"}</TableCell>
                           <TableCell className="text-xs text-red-500 font-mono">{score.quality_flags || "—"}</TableCell>
                         </TableRow>
                       ))}
@@ -299,6 +300,12 @@ export function PatientDetail() {
                     <RiskBadge zone={latestScore.zone} />
                   </div>
 
+                  {latestScore && latestScore.is_lost && (
+                    <div className="border-t pt-3 flex flex-col sm:flex-row gap-2">
+                      <ReferralModal patientId={String(patient.id)} />
+                    </div>
+                  )}
+
                   <div className="border-t pt-3 grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-slate-500 uppercase font-medium">Индекс де Ритиса</p>
@@ -309,7 +316,7 @@ export function PatientDetail() {
                     <div>
                       <p className="text-xs text-slate-500 uppercase font-medium">Вероятность ML</p>
                       <p className="text-base font-semibold text-slate-800">
-                        {latestScore.ml_risk !== null ? (latestScore.ml_risk * 100).toFixed(0) + "%" : "н/д"}
+                        {latestScore.zone === "grey" ? (latestScore.ml_risk !== null ? (latestScore.ml_risk * 100).toFixed(0) + "%" : "н/д") : "Не применялась"}
                       </p>
                     </div>
                   </div>
@@ -348,7 +355,7 @@ export function PatientDetail() {
           </Card>
 
           {latestScore && (
-            <ShapExplanation factors={shapFactors} loading={shapLoading} />
+            <ShapExplanation factors={shapFactors} loading={shapLoading} zone={latestScore.zone ?? undefined} />
           )}
 
           {latestScore && (

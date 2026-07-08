@@ -5,9 +5,10 @@ import { HelpCircle } from "lucide-react";
 interface ShapExplanationProps {
   factors: ShapFactor[];
   loading?: boolean;
+  zone?: string;
 }
 
-export function ShapExplanation({ factors, loading }: ShapExplanationProps) {
+export function ShapExplanation({ factors, loading, zone }: ShapExplanationProps) {
   if (loading) {
     return (
       <Card>
@@ -24,20 +25,26 @@ export function ShapExplanation({ factors, loading }: ShapExplanationProps) {
     0.1 // avoid division by zero
   );
 
+  const isShap = zone === "grey";
+
   return (
     <Card className="shadow-sm border border-slate-200">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-bold text-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2 flex-wrap">
-            <span>Вклад факторов в риск (SHAP)</span>
-            <span className="bg-slate-100 text-slate-500 font-mono text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
-              {import.meta.env.VITE_FEATURE_ML === "true" ? "Модель ML" : "Демо-симуляция"}
-            </span>
+            <span>{isShap ? "Вклад факторов в риск (SHAP)" : "Вклад факторов (клинические правила)"}</span>
+            {isShap && (
+              <span className="bg-slate-100 text-slate-500 font-mono text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
+                Модель ML
+              </span>
+            )}
           </div>
           <div className="group relative">
             <HelpCircle className="w-4 h-4 text-slate-400 cursor-help" />
             <div className="absolute right-0 top-6 hidden group-hover:block bg-slate-800 text-white text-xs rounded p-2 w-64 shadow-lg z-20 font-normal normal-case leading-relaxed">
-              Модель машинного обучения определяет вклад каждого параметра. Красные полосы увеличивают вероятность риска, синие — снижают её.
+              {isShap 
+                ? "Модель машинного обучения определяет вклад каждого параметра. Красные полосы увеличивают вероятность риска, синие — снижают её."
+                : "Клинические правила, определяющие попадание в зону риска на основе клинических рекомендаций."}
             </div>
           </div>
         </CardTitle>
@@ -59,28 +66,30 @@ export function ShapExplanation({ factors, loading }: ShapExplanationProps) {
                   </div>
                   
                   {/* Custom horizontal force bar */}
-                  <div className="relative h-6 bg-slate-50 border border-slate-100 rounded-md overflow-hidden flex">
-                    {/* Centered baseline indicator */}
-                    <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-slate-300 z-10" />
+                  {isShap && (
+                    <div className="relative h-6 bg-slate-50 border border-slate-100 rounded-md overflow-hidden flex">
+                      {/* Centered baseline indicator */}
+                      <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-slate-300 z-10" />
 
-                    {isPositive ? (
-                      // Red bar to the right
-                      <div 
-                        style={{ left: "50%", width: `${absPercent / 2}%` }}
-                        className="absolute top-0 bottom-0 bg-red-500/80 hover:bg-red-500 rounded-r-sm transition-all duration-500 flex items-center pl-1 text-[10px] text-white font-mono font-bold"
-                      >
-                        +{factor.impact.toFixed(2)}
-                      </div>
-                    ) : (
-                      // Blue bar to the left
-                      <div 
-                        style={{ right: "50%", width: `${absPercent / 2}%` }}
-                        className="absolute top-0 bottom-0 bg-blue-500/80 hover:bg-blue-500 rounded-l-sm transition-all duration-500 flex items-center justify-end pr-1 text-[10px] text-white font-mono font-bold"
-                      >
-                        {factor.impact.toFixed(2)}
-                      </div>
-                    )}
-                  </div>
+                      {isPositive ? (
+                        // Red bar to the right
+                        <div 
+                          style={{ left: "50%", width: `${absPercent / 2}%` }}
+                          className="absolute top-0 bottom-0 bg-red-500/80 hover:bg-red-500 rounded-r-sm transition-all duration-500 flex items-center pl-1 text-[10px] text-white font-mono font-bold"
+                        >
+                          +{factor.impact.toFixed(2)}
+                        </div>
+                      ) : (
+                        // Blue bar to the left
+                        <div 
+                          style={{ right: "50%", width: `${absPercent / 2}%` }}
+                          className="absolute top-0 bottom-0 bg-blue-500/80 hover:bg-blue-500 rounded-l-sm transition-all duration-500 flex items-center justify-end pr-1 text-[10px] text-white font-mono font-bold"
+                        >
+                          {factor.impact.toFixed(2)}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

@@ -21,7 +21,6 @@ export function ScanPage() {
   });
 
   const [animatedLost, setAnimatedLost] = useState(0);
-  const [animatedTotal, setAnimatedTotal] = useState(0);
   const navigate = useNavigate();
 
   // Animation effect for counters
@@ -48,24 +47,8 @@ export function ScanPage() {
       setAnimatedLost(0);
     }
 
-    // Animate total
-    let totalStart = 0;
-    const totalEnd = summary.total;
-    setAnimatedTotal(0);
-    if (totalEnd > 0) {
-      const totalStep = Math.max(Math.floor(duration / totalEnd), 15);
-      const totalTimer = setInterval(() => {
-        totalStart += Math.ceil(totalEnd / 50); // Increment faster for larger numbers
-        if (totalStart >= totalEnd) {
-          totalStart = totalEnd;
-          clearInterval(totalTimer);
-        }
-        setAnimatedTotal(totalStart);
-      }, totalStep);
-      return () => clearInterval(totalTimer);
-    } else {
-      setAnimatedTotal(0);
-    }
+    // We removed animatedTotal animation because it runs asynchronously and closure variables mismatch.
+    // We will just use summary.total directly in the component to avoid the "0" bug.
   }, [summary]);
 
   const handleScan = async () => {
@@ -166,7 +149,7 @@ export function ScanPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full border-t border-b border-slate-100 py-6">
               <div className="p-3">
                 <p className="text-xs text-slate-400 uppercase font-semibold">Обработано всего</p>
-                <p className="text-2xl font-bold text-slate-800 mt-1">{animatedTotal}</p>
+                <p className="text-2xl font-bold text-slate-800 mt-1">{summary!.total}</p>
               </div>
               <div className="p-3">
                 <p className="text-xs text-red-500 uppercase font-semibold">Высокий риск</p>

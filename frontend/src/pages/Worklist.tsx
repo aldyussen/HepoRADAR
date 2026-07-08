@@ -188,7 +188,13 @@ export function Worklist() {
                       {patient.apri !== null ? patient.apri.toFixed(2) : "—"}
                     </TableCell>
                     <TableCell className="text-slate-700">
-                      {patient.ml_risk !== null ? (patient.ml_risk * 100).toFixed(0) + "%" : "н/д"}
+                      {patient.zone === "grey" ? (
+                        patient.ml_risk !== null ? (patient.ml_risk * 100).toFixed(0) + "%" : "н/д"
+                      ) : (
+                        <span title="ML применяется в серой зоне для уточнения" className="cursor-help border-b border-dashed border-slate-300">
+                          —
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell className="text-slate-500 font-mono text-xs">
                       {patient.last_lab_date || "—"}

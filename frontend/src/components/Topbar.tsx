@@ -1,6 +1,7 @@
 import { User, LogOut } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 export function Topbar() {
   const { user, logout } = useAuth();
@@ -19,12 +20,39 @@ export function Topbar() {
   };
 
   const currentRole = user?.role || 'viewer';
+  const [isChangingRole, setIsChangingRole] = useState(false);
+
+  const handleRoleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setIsChangingRole(true);
+    const newRole = e.target.value;
+    try {
+      // @ts-ignore
+      await useAuth().login({ username: newRole, password: "123" });
+    } catch (e) {
+      console.error(e);
+    }
+    setIsChangingRole(false);
+    // Reload page to apply new role safely
+    window.location.reload();
+  };
 
   return (
     <header className="h-16 bg-white border-b px-6 flex items-center justify-between shadow-sm">
-      <h2 className="text-sm font-semibold text-slate-600">
-        Рабочая область &middot; <span className="text-slate-800 font-bold">{roleLabels[currentRole] || currentRole}</span>
-      </h2>
+      <div className="flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-slate-600 hidden sm:block">
+          Рабочая область &middot; 
+        </h2>
+        <select 
+          value={currentRole} 
+          onChange={handleRoleChange}
+          disabled={isChangingRole}
+          className="text-sm font-bold text-slate-800 bg-transparent border-none p-0 cursor-pointer focus:ring-0 outline-none"
+        >
+          {Object.entries(roleLabels).map(([key, label]) => (
+            <option key={key} value={key}>{label}</option>
+          ))}
+        </select>
+      </div>
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 text-sm text-slate-600">
           <User className="w-4 h-4 text-slate-400" />
