@@ -1,8 +1,15 @@
 import os
+import sys
 import tempfile
+from pathlib import Path
 
 _TEST_DB_DIR = tempfile.mkdtemp(prefix="heparadar_test_")
 os.environ["HEPARADAR_DATABASE_URL"] = "sqlite:///" + os.path.join(_TEST_DB_DIR, "test.db")
+
+# backend/test/conftest.py -> repo root (sibling of `ml/`), so tests can `import ml.src.export`
+_REPO_ROOT = str(Path(__file__).resolve().parents[2])
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 import pytest  # noqa: E402
 

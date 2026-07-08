@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import cohort, ingest, patients
+from app.api import cohort, explain, ingest, patients
 from app.config import settings
 
 
@@ -19,6 +19,7 @@ def create_app() -> FastAPI:
     app.include_router(ingest.router)
     app.include_router(cohort.router)
     app.include_router(patients.router)
+    app.include_router(explain.router)
 
     @app.get("/health")
     def health():
