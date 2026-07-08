@@ -41,3 +41,13 @@ def client():
     from app.main import app
 
     return TestClient(app)
+
+
+@pytest.fixture()
+def doctor_headers(client, db_session):
+    from app.db.seed import seed_users
+
+    seed_users(db_session)
+    response = client.post("/auth/login", json={"username": "doctor", "password": "doctor123"})
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}

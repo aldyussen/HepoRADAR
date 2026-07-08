@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pathlib import Path
 
+_REPO_ROOT = Path(__file__).resolve().parents[2]  # backend/app/config.py -> repo root
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_prefix="HEPARADAR_", extra="ignore")
@@ -20,17 +22,18 @@ class Settings(BaseSettings):
     ml_risk_threshold: float = 0.5
 
     # ML artifact interface (Part 0.4 / B2)
-    model_path: str = "ml/artifacts/greyzone_model.pkl"
-    shap_explainer_path: str = "ml/artifacts/shap_explainer.pkl"
-    feature_order_path: str = "ml/artifacts/feature_order.json"
+    model_path: str = str(_REPO_ROOT / "ml" / "models" / "greyzone_model.pkl")
+    shap_explainer_path: str = str(_REPO_ROOT / "ml" / "models" / "shap_explainer.pkl")
+    feature_order_path: str = str(_REPO_ROOT / "ml" / "models" / "feature_order.json")
 
     # LLM / RAG (B3)
     llm_url: str = ""
 
     # Auth (B5)
-    jwt_secret: str = "change-me-in-prod"
+    jwt_secret: str = "change-me-in-prod-this-default-is-not-secret-32bytes"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
+    refresh_token_expire_days: int = 14
 
 
 settings = Settings()

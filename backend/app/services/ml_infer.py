@@ -27,6 +27,27 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 _cache: dict = {"key": None, "model": None, "feature_order": None, "available": False}
 _explainer_cache: dict = {"key": None, "explainer": None, "available": False}
 
+_SEX_MAP = {"m": 1, "male": 1, "f": 0, "female": 0}
+
+
+def _coerce_features(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    """Coerce a model-input frame's columns to numeric float64.
+
+    Shared by `predict_risk` and `explain_row` so every caller feeds the
+    model the same dtypes the training pipeline used (CLAUDE.md: never let
+    train and infer diverge) — this is the single place that conversion
+    happens, not duplicated per-router. `sex` is mapped to {0,1} if it
+    arrives as a string; every other stray non-numeric (e.g. an all-missing
+    optional lab column, which pandas types as `object`) is coerced with
+    `errors="coerce"` into NaN. That's safe because the model is NaN-native
+    (XGBoost) — do not median-impute here.
+    """
+    df = df.copy()
+    if "sex" in columns and "sex" in df.columns and not pd.api.types.is_numeric_dtype(df["sex"]):
+        df["sex"] = df["sex"].astype(str).str.strip().str.lower().map(_SEX_MAP)
+    df[columns] = df[columns].apply(pd.to_numeric, errors="coerce").astype("float64")
+    return df
+
 
 def _ensure_repo_root_on_path() -> None:
     repo_root_str = str(_REPO_ROOT)
@@ -83,7 +104,7 @@ def predict_risk(features_df: pd.DataFrame) -> np.ndarray:
     if not _cache["available"]:
         return _fallback_risk(features_df)
 
-    ordered = features_df[_cache["feature_order"]]
+    ordered = _coerce_features(features_df[_cache["feature_order"]], _cache["feature_order"])
     proba = np.asarray(_cache["model"].predict_proba(ordered))
     return proba[:, 1]
 
@@ -127,6 +148,7 @@ def explain_row(features_row: dict) -> dict:
             explainer = _explainer_cache["explainer"]
             order = getattr(explainer, "feature_order", None) or list(features_row.keys())
             row_df = pd.DataFrame([{k: features_row.get(k) for k in order}])
+            row_df = _coerce_features(row_df, order)
             contributions = np.asarray(explainer.shap_values(row_df))[0]
             base_value = float(getattr(explainer, "expected_value", 0.0))
             factors = sorted(

@@ -5,6 +5,7 @@ import pandas as pd
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
+from app.auth.roles import Role, require_role
 from app.db.session import get_db
 from app.models.lab import Lab
 from app.models.patient import Patient
@@ -21,7 +22,11 @@ OPTIONAL_ANALYTES = ("BILIRUBIN", "ALBUMIN")  # optional feature-contract column
 ANALYTES_FOR_FEATURES = REQUIRED_ANALYTES + OPTIONAL_ANALYTES
 
 
-@router.post("/scan", response_model=ScanSummary)
+@router.post(
+    "/scan",
+    response_model=ScanSummary,
+    dependencies=[Depends(require_role(Role.doctor, Role.admin))],
+)
 def scan(db: Session = Depends(get_db)) -> ScanSummary:
     patients = db.query(Patient).all()
     if not patients:
@@ -100,7 +105,11 @@ def scan(db: Session = Depends(get_db)) -> ScanSummary:
     )
 
 
-@router.get("/worklist", response_model=WorklistResponse)
+@router.get(
+    "/worklist",
+    response_model=WorklistResponse,
+    dependencies=[Depends(require_role(Role.doctor, Role.admin, Role.viewer))],
+)
 def worklist(
     zone: str | None = Query(default=None),
     age_min: int | None = Query(default=None),

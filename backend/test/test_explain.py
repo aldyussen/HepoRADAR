@@ -8,10 +8,10 @@ P1,45,M,2026-06-01,40,35,180,0.9,4.0
 """.strip()
 
 
-def _ingest_and_scan(client):
+def _ingest_and_scan(client, headers):
     files = {"file": ("labs.csv", io.BytesIO(CSV_CONTENT.encode()), "text/csv")}
-    assert client.post("/ingest", files=files).status_code == 200
-    assert client.post("/cohort/scan").status_code == 200
+    assert client.post("/ingest", files=files, headers=headers).status_code == 200
+    assert client.post("/cohort/scan", headers=headers).status_code == 200
 
     from app.db.session import SessionLocal
     from app.models.patient import Patient
@@ -23,17 +23,17 @@ def _ingest_and_scan(client):
         db.close()
 
 
-def test_explain_without_explainer_returns_rule_based_reason(client):
-    patient_id = _ingest_and_scan(client)
+def test_explain_without_explainer_returns_rule_based_reason(client, doctor_headers):
+    patient_id = _ingest_and_scan(client, doctor_headers)
 
-    response = client.get(f"/patients/{patient_id}/explain")
+    response = client.get(f"/patients/{patient_id}/explain", headers=doctor_headers)
     assert response.status_code == 200
     body = response.json()
     assert body["base_value"] is None
     assert isinstance(body["factors"], list)
 
 
-def test_explain_with_explainer_returns_shap_factors(client, monkeypatch, tmp_path):
+def test_explain_with_explainer_returns_shap_factors(client, doctor_headers, monkeypatch, tmp_path):
     from app.services import ml_infer
 
     paths = export_placeholder(tmp_path / "artifacts")
@@ -41,23 +41,23 @@ def test_explain_with_explainer_returns_shap_factors(client, monkeypatch, tmp_pa
     monkeypatch.setattr(ml_infer.settings, "feature_order_path", str(paths["feature_order"]))
     monkeypatch.setattr(ml_infer.settings, "shap_explainer_path", str(paths["explainer"]))
 
-    patient_id = _ingest_and_scan(client)
+    patient_id = _ingest_and_scan(client, doctor_headers)
 
-    response = client.get(f"/patients/{patient_id}/explain")
+    response = client.get(f"/patients/{patient_id}/explain", headers=doctor_headers)
     assert response.status_code == 200
     body = response.json()
     assert body["base_value"] == 0.3
     assert len(body["factors"]) <= 3
 
 
-def test_explain_404_for_unknown_patient(client):
-    response = client.get("/patients/999999/explain")
+def test_explain_404_for_unknown_patient(client, doctor_headers):
+    response = client.get("/patients/999999/explain", headers=doctor_headers)
     assert response.status_code == 404
 
 
-def test_explain_empty_payload_when_no_complete_labs(client):
+def test_explain_empty_payload_when_no_complete_labs(client, doctor_headers):
     files = {"file": ("labs.csv", io.BytesIO(b"patient_id,age,sex,date,AST\nP9,50,M,2026-01-01,40\n"), "text/csv")}
-    assert client.post("/ingest", files=files).status_code == 200
+    assert client.post("/ingest", files=files, headers=doctor_headers).status_code == 200
 
     from app.db.session import SessionLocal
     from app.models.patient import Patient
@@ -68,7 +68,7 @@ def test_explain_empty_payload_when_no_complete_labs(client):
     finally:
         db.close()
 
-    response = client.get(f"/patients/{patient_id}/explain")
+    response = client.get(f"/patients/{patient_id}/explain", headers=doctor_headers)
     assert response.status_code == 200
     body = response.json()
     assert body["factors"] == []
