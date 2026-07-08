@@ -1,21 +1,14 @@
-import { useState, useEffect } from "react";
-import { User } from "lucide-react";
+import { User, LogOut } from "lucide-react";
+import { useAuth } from "../lib/auth";
+import { useNavigate } from "react-router-dom";
 
 export function Topbar() {
-  const [role, setRole] = useState(() => localStorage.getItem("heparadar_user_role") || "doctor");
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const handleRoleChange = () => {
-      setRole(localStorage.getItem("heparadar_user_role") || "doctor");
-    };
-    window.addEventListener("roleChanged", handleRoleChange);
-    return () => window.removeEventListener("roleChanged", handleRoleChange);
-  }, []);
-
-  const handleRoleChange = (newRole: string) => {
-    localStorage.setItem("heparadar_user_role", newRole);
-    setRole(newRole);
-    window.dispatchEvent(new Event("roleChanged"));
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   const roleLabels: Record<string, string> = {
@@ -25,24 +18,26 @@ export function Topbar() {
     viewer: "Наблюдатель (Viewer)",
   };
 
+  const currentRole = user?.role || 'viewer';
+
   return (
     <header className="h-16 bg-white border-b px-6 flex items-center justify-between shadow-sm">
       <h2 className="text-sm font-semibold text-slate-600">
-        Рабочая область &middot; <span className="text-slate-800 font-bold">{roleLabels[role] || role}</span>
+        Рабочая область &middot; <span className="text-slate-800 font-bold">{roleLabels[currentRole] || currentRole}</span>
       </h2>
-      <div className="flex items-center gap-2">
-        <User className="w-4 h-4 text-slate-400" />
-        <select
-          aria-label="Выбор роли пользователя (демо-режим)"
-          value={role}
-          onChange={(e) => handleRoleChange(e.target.value)}
-          className="border border-slate-200 rounded-lg p-1.5 px-2.5 text-xs font-semibold bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <User className="w-4 h-4 text-slate-400" />
+          <span className="font-medium">{user?.username || 'Гость'}</span>
+        </div>
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-red-600 transition-colors"
+          title="Выйти"
         >
-          <option value="doctor">Врач (Doctor)</option>
-          <option value="coordinator">Координатор (Coordinator)</option>
-          <option value="admin">Администратор (Admin)</option>
-          <option value="viewer">Наблюдатель (Viewer)</option>
-        </select>
+          <LogOut className="w-4 h-4" />
+          <span className="hidden sm:inline">Выйти</span>
+        </button>
       </div>
     </header>
   );

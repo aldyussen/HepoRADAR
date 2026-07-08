@@ -7,6 +7,8 @@ import { Ingest } from './pages/Ingest';
 import { ScanPage } from './pages/ScanPage';
 import { CohortPage } from './pages/CohortPage';
 import { CascadePage } from './pages/CascadePage';
+import { Login } from './pages/Login';
+import { AuthProvider, useAuth } from './lib/auth';
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -22,20 +24,37 @@ function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, token, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Загрузка...</div>;
+  }
+  
+  if (!token && !user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+}
+
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/scan" replace />} />
-        <Route path="/scan" element={<Layout><ScanPage /></Layout>} />
-        <Route path="/worklist" element={<Layout><Worklist /></Layout>} />
-        <Route path="/patients/:id" element={<Layout><PatientDetail /></Layout>} />
-        <Route path="/cohort" element={<Layout><CohortPage /></Layout>} />
-        <Route path="/cascade" element={<Layout><CascadePage /></Layout>} />
-        <Route path="/ingest" element={<Layout><Ingest /></Layout>} />
-        <Route path="*" element={<Navigate to="/scan" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Navigate to="/scan" replace />} />
+          <Route path="/scan" element={<ProtectedRoute><Layout><ScanPage /></Layout></ProtectedRoute>} />
+          <Route path="/worklist" element={<ProtectedRoute><Layout><Worklist /></Layout></ProtectedRoute>} />
+          <Route path="/patients/:id" element={<ProtectedRoute><Layout><PatientDetail /></Layout></ProtectedRoute>} />
+          <Route path="/cohort" element={<ProtectedRoute><Layout><CohortPage /></Layout></ProtectedRoute>} />
+          <Route path="/cascade" element={<ProtectedRoute><Layout><CascadePage /></Layout></ProtectedRoute>} />
+          <Route path="/ingest" element={<ProtectedRoute><Layout><Ingest /></Layout></ProtectedRoute>} />
+          <Route path="*" element={<Navigate to="/scan" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

@@ -1,21 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { api } from "../api";
 import { IngestReport } from "../types";
 import { Activity, UploadCloud, CheckCircle, AlertTriangle, AlertOctagon } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { useAuth } from "../lib/auth";
 
 export function Ingest() {
-  const [role, setRole] = useState(() => localStorage.getItem("heparadar_user_role") || "doctor");
-
-  useEffect(() => {
-    const handleRoleChange = () => {
-      setRole(localStorage.getItem("heparadar_user_role") || "doctor");
-    };
-    window.addEventListener("roleChanged", handleRoleChange);
-    return () => window.removeEventListener("roleChanged", handleRoleChange);
-  }, []);
+  const { user } = useAuth();
+  const role = user?.role || "viewer";
 
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);

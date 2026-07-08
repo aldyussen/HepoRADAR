@@ -1,25 +1,18 @@
-import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Users, Upload, Activity, Search, BarChart3, GitFork } from 'lucide-react';
+import { useAuth } from '../lib/auth';
 
 export function Sidebar() {
   const location = useLocation();
-  const [role, setRole] = useState(() => localStorage.getItem("heparadar_user_role") || "doctor");
-
-  useEffect(() => {
-    const handleRoleChange = () => {
-      setRole(localStorage.getItem("heparadar_user_role") || "doctor");
-    };
-    window.addEventListener("roleChanged", handleRoleChange);
-    return () => window.removeEventListener("roleChanged", handleRoleChange);
-  }, []);
+  const { user } = useAuth();
+  const role = user?.role || 'viewer';
 
   const allLinks = [
     { name: 'Сканирование когорты', path: '/scan', icon: Search, roles: ['doctor', 'admin'] },
-    { name: 'Список пациентов', path: '/worklist', icon: Users, roles: ['doctor', 'coordinator', 'viewer'] },
+    { name: 'Список пациентов', path: '/worklist', icon: Users, roles: ['doctor', 'coordinator', 'viewer', 'admin'] },
     { name: 'Обзор когорты', path: '/cohort', icon: BarChart3, roles: ['doctor', 'admin', 'viewer'] },
-    { name: 'Каскад ХВГ', path: '/cascade', icon: GitFork, roles: ['coordinator'] },
-    { name: 'Загрузка CSV', path: '/ingest', icon: Upload, roles: ['admin'] },
+    { name: 'Каскад ХВГ', path: '/cascade', icon: GitFork, roles: ['coordinator', 'admin'] },
+    { name: 'Загрузка CSV', path: '/ingest', icon: Upload, roles: ['admin', 'doctor'] },
   ];
 
   const links = allLinks.filter(link => link.roles.includes(role));
