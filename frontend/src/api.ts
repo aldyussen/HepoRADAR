@@ -4,6 +4,8 @@ import {
   ScanSummary,
   IngestReport,
   Zone,
+  ShapFactor,
+  CascadeStage,
 } from './types';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -75,5 +77,17 @@ export const api = {
       method: 'POST',
       body: formData,
     });
+  },
+
+  getPatientExplain: async (id: number): Promise<ShapFactor[]> => {
+    return request<ShapFactor[]>(`/patients/${id}/explain`);
+  },
+
+  createReferral: async (id: number): Promise<{ text: string }> => {
+    return request<{ text: string }>(`/patients/${id}/referral`, { method: 'POST' });
+  },
+
+  getHcvCascade: async (): Promise<CascadeStage[]> => {
+    return request<CascadeStage[]>('/cascade/hcv');
   },
 };

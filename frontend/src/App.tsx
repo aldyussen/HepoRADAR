@@ -6,6 +6,7 @@ import { PatientDetail } from './pages/PatientDetail';
 import { Ingest } from './pages/Ingest';
 import { ScanPage } from './pages/ScanPage';
 import { CohortPage } from './pages/CohortPage';
+import { CascadePage } from './pages/CascadePage';
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Route path="/worklist" element={<Layout><Worklist /></Layout>} />
         <Route path="/patients/:id" element={<Layout><PatientDetail /></Layout>} />
         <Route path="/cohort" element={<Layout><CohortPage /></Layout>} />
+        <Route path="/cascade" element={<Layout><CascadePage /></Layout>} />
         <Route path="/ingest" element={<Layout><Ingest /></Layout>} />
         <Route path="*" element={<Navigate to="/scan" replace />} />
       </Routes>

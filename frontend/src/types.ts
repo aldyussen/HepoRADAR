@@ -80,3 +80,15 @@ export const sexLabel = (s: number | null): string => {
   if (s === 0) return "Ж";
   return "—";
 };
+
+export interface ShapFactor {
+  feature: string;
+  value: string;
+  impact: number;
+}
+
+export interface CascadeStage {
+  stage: string;
+  count: number;
+  description: string;
+}

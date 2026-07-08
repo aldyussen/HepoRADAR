@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "../api";
 import { IngestReport } from "../types";
 import { Activity, UploadCloud, CheckCircle, AlertTriangle, AlertOctagon } from "lucide-react";
@@ -7,10 +7,39 @@ import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 
 export function Ingest() {
+  const [role, setRole] = useState(() => localStorage.getItem("heparadar_user_role") || "doctor");
+
+  useEffect(() => {
+    const handleRoleChange = () => {
+      setRole(localStorage.getItem("heparadar_user_role") || "doctor");
+    };
+    window.addEventListener("roleChanged", handleRoleChange);
+    return () => window.removeEventListener("roleChanged", handleRoleChange);
+  }, []);
+
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [report, setReport] = useState<IngestReport | null>(null);
+
+  if (role !== "admin") {
+    return (
+      <div className="max-w-md mx-auto mt-16 text-center space-y-6 p-8 border border-dashed rounded-3xl bg-white shadow-sm">
+        <div className="w-16 h-16 bg-red-50 border border-red-100 rounded-full flex items-center justify-center mx-auto text-red-500">
+          <AlertOctagon className="w-8 h-8" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-slate-900">Доступ ограничен</h2>
+          <p className="text-sm text-slate-500 max-w-sm mx-auto">
+            Для импорта лабораторных данных (загрузки CSV-файлов) требуются права роли <strong>Администратор</strong>.
+          </p>
+        </div>
+        <p className="text-xs text-slate-400">
+          Переключите роль в верхней панели, чтобы получить доступ к этому разделу.
+        </p>
+      </div>
+    );
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

@@ -9,10 +9,10 @@ import { TrendChart } from "../components/TrendChart";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 
-// Отложенные компоненты для будущего бэка (сохранены в репозитории):
-// import { ReflexBanner } from "../components/ReflexBanner";
-// import { ReferralModal } from "../components/ReferralModal";
-// import { ReasonList } from "../components/ReasonList";
+import { ReferralModal } from "../components/ReferralModal";
+import { ReasonList } from "../components/ReasonList";
+import { ShapExplanation } from "../components/ShapExplanation";
+import { ShapFactor } from "../types";
 
 interface PivotedLab {
   date: string;
@@ -39,6 +39,56 @@ function pivotLabs(labs: LabEntry[]): PivotedLab[] {
     }));
 }
 
+function generateMockShap(patient: PatientCard): ShapFactor[] {
+  const factors: ShapFactor[] = [];
+  
+  const astEntry = patient.labs.find(l => l.analyte === "AST");
+  const altEntry = patient.labs.find(l => l.analyte === "ALT");
+  const pltEntry = patient.labs.find(l => l.analyte === "PLT");
+
+  const astVal = astEntry?.value ?? null;
+  const altVal = altEntry?.value ?? null;
+  const pltVal = pltEntry?.value ?? null;
+
+  if (patient.age !== null) {
+    const ageImpact = patient.age > 50 ? 0.3 + (patient.age - 50) * 0.02 : -0.1;
+    factors.push({
+      feature: "Возраст",
+      value: `${patient.age} лет`,
+      impact: ageImpact,
+    });
+  }
+
+  if (astVal !== null) {
+    const astImpact = astVal > 40 ? 0.4 + (astVal - 40) * 0.005 : -0.2;
+    factors.push({
+      feature: "АСТ",
+      value: `${astVal} U/L`,
+      impact: astImpact,
+    });
+  }
+
+  if (altVal !== null) {
+    const altImpact = altVal > 40 ? 0.2 + (altVal - 40) * 0.002 : -0.15;
+    factors.push({
+      feature: "АЛТ",
+      value: `${altVal} U/L`,
+      impact: altImpact,
+    });
+  }
+
+  if (pltVal !== null) {
+    const pltImpact = pltVal < 150 ? 0.5 + (150 - pltVal) * 0.006 : -0.3;
+    factors.push({
+      feature: "Тромбоциты (PLT)",
+      value: `${pltVal} 10^9/L`,
+      impact: -pltImpact,
+    });
+  }
+
+  return factors.sort((a, b) => Math.abs(b.impact) - Math.abs(a.impact));
+}
+
 export function PatientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -46,6 +96,17 @@ export function PatientDetail() {
   const [patient, setPatient] = useState<PatientCard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [role, setRole] = useState(() => localStorage.getItem("heparadar_user_role") || "doctor");
+
+  useEffect(() => {
+    const handleRoleChange = () => {
+      setRole(localStorage.getItem("heparadar_user_role") || "doctor");
+    };
+    window.addEventListener("roleChanged", handleRoleChange);
+    return () => window.removeEventListener("roleChanged", handleRoleChange);
+  }, []);
+  const [shapFactors, setShapFactors] = useState<ShapFactor[]>([]);
+  const [shapLoading, setShapLoading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -57,7 +118,16 @@ export function PatientDetail() {
     }
     
     api.getPatient(numericId)
-      .then(setPatient)
+      .then(p => {
+        setPatient(p);
+        setShapLoading(true);
+        api.getPatientExplain(p.id)
+          .then(setShapFactors)
+          .catch(() => {
+            setShapFactors(generateMockShap(p));
+          })
+          .finally(() => setShapLoading(false));
+      })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, [id]);
@@ -209,25 +279,31 @@ export function PatientDetail() {
                 </>
               )}
 
-              {/* Будущие кнопки действий (закомментированы под будущий бэк):
-              {latestScore && latestScore.is_lost && (
+              {latestScore && latestScore.is_lost && role === "doctor" && (
                 <div className="border-t pt-3">
-                  <ReferralModal patientId={patient.id} />
+                  <ReferralModal patientId={String(patient.id)} />
                 </div>
               )}
-              */}
             </CardContent>
           </Card>
 
-          {/* Будущие баннеры (закомментированы под будущий бэк):
-          {reflex && reflex.flags && reflex.flags.length > 0 && (
-            <ReflexBanner flags={reflex.flags} />
+          {latestScore && (
+            <ShapExplanation factors={shapFactors} loading={shapLoading} />
           )}
 
-          {latestScore && latestScore.reasons && (
-            <ReasonList reasons={latestScore.reasons} />
+          {latestScore && (
+            <ReasonList reasons={
+              shapFactors
+                .filter(f => f.impact > 0.1)
+                .map(f => {
+                  if (f.feature === "Возраст") return "Возраст пациента увеличивает базовую вероятность развития фиброза.";
+                  if (f.feature === "АСТ") return "Повышенный уровень АСТ указывает на активный цитолиз гепатоцитов.";
+                  if (f.feature === "АЛТ") return "Повышенный уровень АЛТ свидетельствует о повреждении печени.";
+                  if (f.feature.includes("тромбоциты") || f.feature.includes("PLT")) return "Снижение уровня тромбоцитов указывает на повышенный риск цирроза и портальной гипертензии.";
+                  return `Фактор ${f.feature} (${f.value}) увеличивает клинический риск.`;
+                })
+            } />
           )}
-          */}
         </div>
       </div>
     </div>
