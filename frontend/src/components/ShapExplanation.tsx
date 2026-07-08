@@ -28,7 +28,12 @@ export function ShapExplanation({ factors, loading }: ShapExplanationProps) {
     <Card className="shadow-sm border border-slate-200">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-bold text-slate-800 flex items-center justify-between">
-          <span>Вклад факторов в риск (SHAP)</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span>Вклад факторов в риск (SHAP)</span>
+            <span className="bg-slate-100 text-slate-500 font-mono text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
+              {import.meta.env.VITE_FEATURE_ML === "true" ? "Модель ML" : "Демо-симуляция"}
+            </span>
+          </div>
           <div className="group relative">
             <HelpCircle className="w-4 h-4 text-slate-400 cursor-help" />
             <div className="absolute right-0 top-6 hidden group-hover:block bg-slate-800 text-white text-xs rounded p-2 w-64 shadow-lg z-20 font-normal normal-case leading-relaxed">

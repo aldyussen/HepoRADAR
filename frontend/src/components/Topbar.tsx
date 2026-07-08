@@ -33,6 +33,7 @@ export function Topbar() {
       <div className="flex items-center gap-2">
         <User className="w-4 h-4 text-slate-400" />
         <select
+          aria-label="Выбор роли пользователя (демо-режим)"
           value={role}
           onChange={(e) => handleRoleChange(e.target.value)}
           className="border border-slate-200 rounded-lg p-1.5 px-2.5 text-xs font-semibold bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-500"

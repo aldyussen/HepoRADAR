@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
-import { WorklistItem, Zone, ScanSummary, sexLabel } from "../types";
+import { WorklistItem, Zone, sexLabel } from "../types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { RiskBadge } from "../components/RiskBadge";
 import { Activity, AlertCircle } from "lucide-react";
@@ -19,18 +19,6 @@ export function Worklist() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  
-  const [scanSummary] = useState<ScanSummary | null>(() => {
-    const saved = localStorage.getItem("heparadar_scan_summary");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  });
 
   const navigate = useNavigate();
 
@@ -46,6 +34,13 @@ export function Worklist() {
       .then(res => {
         setItems(res.items);
         setTotal(res.total);
+        if (res.total > 0 && !localStorage.getItem("heparadar_scan_summary")) {
+          api.scanCohort()
+            .then(sum => {
+              localStorage.setItem("heparadar_scan_summary", JSON.stringify(sum));
+            })
+            .catch(() => {});
+        }
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
@@ -53,12 +48,8 @@ export function Worklist() {
 
   // Fetch when page or filters change
   useEffect(() => {
-    if (scanSummary) {
-      fetchWorklist();
-    } else {
-      setLoading(false);
-    }
-  }, [fetchWorklist, scanSummary]);
+    fetchWorklist();
+  }, [fetchWorklist]);
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -71,8 +62,10 @@ export function Worklist() {
       {/* Filters */}
       <div className="flex flex-wrap gap-4 items-center bg-slate-50 p-4 rounded-lg border border-slate-100">
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-slate-500">Зона риска</label>
+          <label htmlFor="risk-zone-filter" className="text-xs font-semibold text-slate-500">Зона риска</label>
           <select 
+            id="risk-zone-filter"
+            aria-label="Фильтр по зоне риска"
             value={zone} 
             onChange={(e) => { setZone(e.target.value as Zone | ""); setPage(1); }}
             className="border border-slate-200 rounded-md p-1.5 text-sm bg-white min-w-[120px] focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -85,8 +78,10 @@ export function Worklist() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-slate-500">Минимальный возраст</label>
+          <label htmlFor="min-age-filter" className="text-xs font-semibold text-slate-500">Минимальный возраст</label>
           <input 
+            id="min-age-filter"
+            aria-label="Фильтр по минимальному возрасту"
             type="number" 
             placeholder="Напр. 50"
             value={ageMin} 
@@ -116,10 +111,10 @@ export function Worklist() {
         <div className="p-4 bg-red-50 text-red-700 rounded-lg">
           Ошибка загрузки списка: {error}
         </div>
-      ) : !scanSummary ? (
+      ) : total === 0 && !zone && !ageMin ? (
         <div className="flex flex-col items-center justify-center h-64 text-slate-500 border border-dashed rounded-lg bg-white p-8 text-center">
           <AlertCircle className="w-12 h-12 mb-4 text-slate-300 animate-pulse" />
-          <p className="font-semibold text-slate-700 mb-1">База данных не отсканирована</p>
+          <p className="font-semibold text-slate-700 mb-1">База данных не отсканирована или пуста</p>
           <p className="text-sm max-w-sm mb-4">Для отображения списка потерянных пациентов необходимо запустить сканирование когорты.</p>
           <Button onClick={() => navigate("/scan")} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl">
             Перейти к сканированию
@@ -129,7 +124,7 @@ export function Worklist() {
         <div className="flex flex-col items-center justify-center h-64 text-slate-500 border border-dashed rounded-lg bg-white p-8 text-center">
           <AlertCircle className="w-12 h-12 mb-4 text-slate-300" />
           <p className="font-semibold text-slate-700 mb-1">Список пуст</p>
-          <p className="text-sm max-w-sm">Запустите скан когорты или измените фильтры, чтобы найти потерянных пациентов.</p>
+          <p className="text-sm max-w-sm">Измените фильтры, чтобы найти потерянных пациентов.</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -152,8 +147,17 @@ export function Worklist() {
                 {items.map((patient) => (
                   <TableRow 
                     key={patient.patient_id} 
-                    className="cursor-pointer hover:bg-slate-50 transition-colors"
+                    className="cursor-pointer hover:bg-slate-50 transition-colors focus:outline-none focus:bg-slate-100 focus:ring-2 focus:ring-blue-500 focus:ring-inset"
                     onClick={() => navigate(`/patients/${patient.patient_id}`)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        navigate(`/patients/${patient.patient_id}`);
+                      }
+                    }}
+                    aria-label={`Профиль пациента с MRN ${patient.mrn}`}
                   >
                     <TableCell className="font-mono font-medium text-slate-900">{patient.mrn}</TableCell>
                     <TableCell className="text-slate-700">{patient.age !== null ? patient.age : "—"}</TableCell>

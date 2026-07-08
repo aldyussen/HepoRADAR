@@ -62,7 +62,12 @@ export function ReferralModal({ patientId }: { patientId: string }) {
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Черновик направления</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <span>Черновик направления</span>
+            <span className="bg-slate-100 text-slate-500 font-mono text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
+              Демо-генератор RAG
+            </span>
+          </DialogTitle>
           <DialogDescription>
             Вы можете скопировать этот текст и вставить его в МИС (медицинскую информационную систему).
           </DialogDescription>

@@ -17,18 +17,18 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   if (!res.ok) {
     let errMsg = `Ошибка API: ${res.status}`;
     try {
-      const body = await res.json();
-      if (body && body.detail) {
-        errMsg = typeof body.detail === 'string' ? body.detail : JSON.stringify(body.detail);
-      } else if (body && body.message) {
-        errMsg = body.message;
-      }
-    } catch {
+      const text = await res.text();
       try {
-        const text = await res.text();
+        const body = JSON.parse(text);
+        if (body && body.detail) {
+          errMsg = typeof body.detail === 'string' ? body.detail : JSON.stringify(body.detail);
+        } else if (body && body.message) {
+          errMsg = body.message;
+        }
+      } catch {
         if (text) errMsg = text;
-      } catch {}
-    }
+      }
+    } catch {}
     const err = new Error(errMsg);
     (err as any).status = res.status;
     throw err;

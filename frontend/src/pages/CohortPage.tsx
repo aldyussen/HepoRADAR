@@ -2,11 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, Title, Text, DonutChart, BarChart, Legend, Grid } from "@tremor/react";
 import { ScanSummary } from "../types";
+import { api } from "../api";
 import { Button } from "../components/ui/button";
-import { BarChart2, PieChart, Sparkles, ShieldAlert, ArrowRight } from "lucide-react";
+import { BarChart2, PieChart, Sparkles, ShieldAlert, ArrowRight, Activity } from "lucide-react";
 
 export function CohortPage() {
   const [summary, setSummary] = useState<ScanSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -14,11 +17,46 @@ export function CohortPage() {
     if (saved) {
       try {
         setSummary(JSON.parse(saved));
-      } catch {
-        setSummary(null);
-      }
+        setLoading(false);
+        return;
+      } catch {}
     }
+
+    api.getWorklist({ page: 1, page_size: 1 })
+      .then(res => {
+        if (res.total > 0) {
+          api.scanCohort()
+            .then(sum => {
+              localStorage.setItem("heparadar_scan_summary", JSON.stringify(sum));
+              setSummary(sum);
+            })
+            .catch(err => setError(err.message))
+            .finally(() => setLoading(false));
+        } else {
+          setLoading(false);
+        }
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Activity className="w-8 h-8 text-blue-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-700 rounded-lg max-w-md mx-auto mt-12">
+        Ошибка загрузки аналитики: {error}
+      </div>
+    );
+  }
 
   if (!summary) {
     return (

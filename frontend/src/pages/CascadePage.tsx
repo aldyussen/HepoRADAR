@@ -40,7 +40,12 @@ export function CascadePage() {
   return (
     <div className="max-w-5xl mx-auto space-y-8 py-8 px-4">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Мониторинг каскада ХВГ</h1>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Мониторинг каскада ХВГ</h1>
+          <span className="bg-slate-100 text-slate-500 font-mono text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider self-center">
+            Демо-симуляция когорты
+          </span>
+        </div>
         <p className="text-sm text-slate-500 mt-1">
           Анализ воронки прохождения диагностики и лечения пациентов с подозрением на хронический вирусный гепатит C (HCV)
         </p>

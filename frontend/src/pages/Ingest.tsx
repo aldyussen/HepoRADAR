@@ -25,18 +25,20 @@ export function Ingest() {
   if (role !== "admin") {
     return (
       <div className="max-w-md mx-auto mt-16 text-center space-y-6 p-8 border border-dashed rounded-3xl bg-white shadow-sm">
-        <div className="w-16 h-16 bg-red-50 border border-red-100 rounded-full flex items-center justify-center mx-auto text-red-500">
+        <div className="w-16 h-16 bg-amber-50 border border-amber-100 rounded-full flex items-center justify-center mx-auto text-amber-500">
           <AlertOctagon className="w-8 h-8" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-slate-900">Доступ ограничен</h2>
+          <h2 className="text-2xl font-bold text-slate-900">Демо-режим ролей</h2>
           <p className="text-sm text-slate-500 max-w-sm mx-auto">
-            Для импорта лабораторных данных (загрузки CSV-файлов) требуются права роли <strong>Администратор</strong>.
+            В демонстрационных целях импорт лабораторных данных (загрузка CSV) ограничен. Для выполнения этого действия требуются права роли <strong>Администратор</strong>.
           </p>
         </div>
-        <p className="text-xs text-slate-400">
-          Переключите роль в верхней панели, чтобы получить доступ к этому разделу.
-        </p>
+        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-left">
+          <p className="text-xs text-slate-500 leading-relaxed">
+            <strong>Примечание:</strong> Полноценная аутентификация и проверка JWT-токенов на сервере подключаются на Фазе 6 (L6). Сейчас вы можете переключить активную роль на <strong>Администратор (Admin)</strong> в верхнем меню, чтобы протестировать импорт.
+          </p>
+        </div>
       </div>
     );
   }

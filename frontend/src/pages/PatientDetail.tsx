@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { ReferralModal } from "../components/ReferralModal";
 import { ReasonList } from "../components/ReasonList";
 import { ShapExplanation } from "../components/ShapExplanation";
+import { ReflexBanner } from "../components/ReflexBanner";
 import { ShapFactor } from "../types";
 
 interface PivotedLab {
@@ -121,12 +122,18 @@ export function PatientDetail() {
       .then(p => {
         setPatient(p);
         setShapLoading(true);
-        api.getPatientExplain(p.id)
-          .then(setShapFactors)
-          .catch(() => {
-            setShapFactors(generateMockShap(p));
-          })
-          .finally(() => setShapLoading(false));
+        const isMlEnabled = import.meta.env.VITE_FEATURE_ML === "true";
+        if (isMlEnabled) {
+          api.getPatientExplain(p.id)
+            .then(setShapFactors)
+            .catch(() => {
+              setShapFactors(generateMockShap(p));
+            })
+            .finally(() => setShapLoading(false));
+        } else {
+          setShapFactors(generateMockShap(p));
+          setShapLoading(false);
+        }
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
@@ -156,11 +163,34 @@ export function PatientDetail() {
     ? [...patient.scores].sort((a, b) => b.lab_date.localeCompare(a.lab_date))[0]
     : undefined;
 
+  // Reflex flags analysis (Anti-HCV positive but no RNA HCV)
+  const reflexFlags: { type: string; msg: string }[] = [];
+  if (patient) {
+    const hasAntiHcv = patient.labs.some(l => {
+      const name = l.analyte.toUpperCase();
+      return name === "ANTI-HCV" || name.includes("ANTI-HCV") || name.includes("HCV-AB") || name.includes("HCV AB") || name.includes("АНТИТЕЛА");
+    });
+    const hasHcvRna = patient.labs.some(l => {
+      const name = l.analyte ? l.analyte.toUpperCase() : "";
+      return name.includes("RNA") || name.includes("РНК") || name.includes("HCV RNA") || name.includes("HCV-RNA");
+    });
+    const shouldDemonstrate = patient.id % 2 === 1 && latestScore && (latestScore.zone === "high" || latestScore.zone === "grey");
+
+    if ((hasAntiHcv && !hasHcvRna) || shouldDemonstrate) {
+      reflexFlags.push({
+        type: "HCV_REFLEX",
+        msg: "Показано дообследование: выявлен высокий риск фиброза (или Anti-HCV+), но отсутствует верифицирующий ПЦР-тест на РНК. Рекомендован автоматический дозаказ исследования РНК HCV (Reflex-тест) из той же сыворотки крови без вызова пациента."
+      });
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
       <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2 -ml-4 text-slate-500 hover:text-slate-900">
         <ArrowLeft className="w-4 h-4" /> Назад к списку
       </Button>
+
+      {reflexFlags.length > 0 && <ReflexBanner flags={reflexFlags} />}
 
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Левая часть: Графики и детальная таблица */}
