@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
+from app.auth.roles import Role, require_role
 from app.db.session import get_db
 from app.models.score import Score
 from app.schemas.cohort import ScanSummary, WorklistItem, WorklistResponse
@@ -10,13 +11,21 @@ from app.services.cohort_scan import run_cohort_scan
 router = APIRouter(prefix="/cohort", tags=["cohort"])
 
 
-@router.post("/scan", response_model=ScanSummary)
+@router.post(
+    "/scan",
+    response_model=ScanSummary,
+    dependencies=[Depends(require_role(Role.doctor, Role.admin))],
+)
 def scan(db: Session = Depends(get_db)) -> ScanSummary:
     return run_cohort_scan(db)
 
 
 
-@router.get("/worklist", response_model=WorklistResponse)
+@router.get(
+    "/worklist",
+    response_model=WorklistResponse,
+    dependencies=[Depends(require_role(Role.doctor, Role.admin, Role.viewer))],
+)
 def worklist(
     zone: str | None = Query(default=None),
     age_min: int | None = Query(default=None),

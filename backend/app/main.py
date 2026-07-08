@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import cohort, explain, ingest, patients
+from app.auth import router as auth_router
 from app.config import settings
 
 
@@ -16,6 +17,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    app.include_router(auth_router.router)
     app.include_router(ingest.router)
     app.include_router(cohort.router)
     app.include_router(patients.router)

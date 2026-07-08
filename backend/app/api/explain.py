@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.auth.roles import Role, require_role
 from app.db.session import get_db
 from app.models.patient import Patient
 from app.schemas.explain import ExplainResponse
@@ -14,7 +15,11 @@ REQUIRED_ANALYTES = ("AST", "ALT", "PLT")
 OPTIONAL_ANALYTES = ("BILIRUBIN", "ALBUMIN")
 
 
-@router.get("/{patient_id}/explain", response_model=ExplainResponse)
+@router.get(
+    "/{patient_id}/explain",
+    response_model=ExplainResponse,
+    dependencies=[Depends(require_role(Role.doctor, Role.admin))],
+)
 def explain(patient_id: int, db: Session = Depends(get_db)) -> ExplainResponse:
     patient = db.query(Patient).filter(Patient.id == patient_id).one_or_none()
     if patient is None:
