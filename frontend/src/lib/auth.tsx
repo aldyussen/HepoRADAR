@@ -18,9 +18,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('heparadar_access_token'));
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>({ id: 1, username: 'doctor', role: 'doctor' });
+  const [token, setToken] = useState<string | null>('dummy_token');
+  const [isLoading, setIsLoading] = useState(false);
 
   const logout = () => {
     setToken(null);
