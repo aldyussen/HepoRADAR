@@ -24,7 +24,7 @@ COPY backend/app ./app
 COPY ml ./ml
 
 # Копируем собранный фронтенд
-COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
+COPY --from=frontend-builder /app/frontend/dist /frontend/dist
 
 EXPOSE 8000
 
