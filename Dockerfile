@@ -19,9 +19,9 @@ RUN apt-get update && apt-get install -y libgomp1 && rm -rf /var/lib/apt/lists/*
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем код бэкенда
+# Копируем код бэкенда и ML
 COPY backend/app ./app
-COPY backend/ml ./ml
+COPY ml ./ml
 
 # Копируем собранный фронтенд
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
