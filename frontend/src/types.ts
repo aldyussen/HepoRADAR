@@ -92,3 +92,17 @@ export interface CascadeStage {
   count: number;
   description: string;
 }
+
+export interface ExplainFactor {
+  feature: string;
+  value: number | null;
+  shap: number | null;
+  direction: string;
+}
+
+export interface ExplainResponse {
+  base_value: number | null;
+  prediction: number | null;
+  factors: ExplainFactor[];
+}
+

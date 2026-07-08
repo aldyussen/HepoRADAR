@@ -13,7 +13,7 @@ import { ReferralModal } from "../components/ReferralModal";
 import { ReasonList } from "../components/ReasonList";
 import { ShapExplanation } from "../components/ShapExplanation";
 import { ReflexBanner } from "../components/ReflexBanner";
-import { ShapFactor } from "../types";
+import { ShapFactor, ExplainResponse } from "../types";
 
 interface PivotedLab {
   date: string;
@@ -90,6 +90,53 @@ function generateMockShap(patient: PatientCard): ShapFactor[] {
   return factors.sort((a, b) => Math.abs(b.impact) - Math.abs(a.impact));
 }
 
+function mapExplainResponseToShap(res: ExplainResponse): ShapFactor[] {
+  if (!res || !res.factors) return [];
+  
+  const featureVocab: Record<string, string> = {
+    age: "Возраст",
+    sex: "Пол",
+    ast: "АСТ",
+    alt: "АЛТ",
+    plt: "Тромбоциты (PLT)",
+    bilirubin: "Билирубин",
+    albumin: "Альбумин",
+  };
+
+  const formatValue = (feature: string, val: number | null): string => {
+    if (val === null) return "н/д";
+    switch (feature.toLowerCase()) {
+      case "ast":
+      case "alt":
+        return `${val} U/L`;
+      case "plt":
+        return `${val} 10^9/L`;
+      case "age":
+        return `${val} лет`;
+      case "bilirubin":
+        return `${val} mg/dL`;
+      case "albumin":
+        return `${val} g/dL`;
+      case "sex":
+        return val === 1 ? "М" : "Ж";
+      default:
+        return String(val);
+    }
+  };
+
+  return res.factors.map(f => {
+    const rawImpact = f.shap ?? 0;
+    const isDecreases = f.direction === "decreases risk";
+    const impact = isDecreases ? -Math.abs(rawImpact) : Math.abs(rawImpact);
+    
+    return {
+      feature: featureVocab[f.feature.toLowerCase()] || f.feature,
+      value: formatValue(f.feature, f.value),
+      impact: impact,
+    };
+  });
+}
+
 export function PatientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -125,7 +172,14 @@ export function PatientDetail() {
         const isMlEnabled = import.meta.env.VITE_FEATURE_ML === "true";
         if (isMlEnabled) {
           api.getPatientExplain(p.id)
-            .then(setShapFactors)
+            .then(res => {
+              const mapped = mapExplainResponseToShap(res);
+              if (mapped.length > 0) {
+                setShapFactors(mapped);
+              } else {
+                setShapFactors(generateMockShap(p));
+              }
+            })
             .catch(() => {
               setShapFactors(generateMockShap(p));
             })
@@ -330,6 +384,8 @@ export function PatientDetail() {
                   if (f.feature === "АСТ") return "Повышенный уровень АСТ указывает на активный цитолиз гепатоцитов.";
                   if (f.feature === "АЛТ") return "Повышенный уровень АЛТ свидетельствует о повреждении печени.";
                   if (f.feature.includes("тромбоциты") || f.feature.includes("PLT")) return "Снижение уровня тромбоцитов указывает на повышенный риск цирроза и портальной гипертензии.";
+                  if (f.feature === "Билирубин") return "Повышенный билирубин может свидетельствовать о нарушении желчевыделительной функции печени.";
+                  if (f.feature === "Альбумин") return "Снижение уровня альбумина указывает на нарушение белковосинтезирующей функции печени.";
                   return `Фактор ${f.feature} (${f.value}) увеличивает клинический риск.`;
                 })
             } />
