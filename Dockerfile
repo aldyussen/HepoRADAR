@@ -2,7 +2,7 @@
 FROM node:20 AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 COPY frontend/ .
 # Отключаем VITE_API_BASE_URL, чтобы использовались относительные пути к нашему же бэкенду
 ENV VITE_API_BASE_URL=""
