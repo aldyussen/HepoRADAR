@@ -10,6 +10,7 @@ import { Button } from "../components/ui/button";
 export function Worklist() {
   const [items, setItems] = useState<WorklistItem[]>([]);
   const [total, setTotal] = useState(0);
+  const [reflexCount, setReflexCount] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
   
@@ -34,6 +35,7 @@ export function Worklist() {
       .then(res => {
         setItems(res.items);
         setTotal(res.total);
+        setReflexCount(res.reflex_count || 0);
         if (res.total > 0 && !localStorage.getItem("heparadar_scan_summary")) {
           api.scanCohort()
             .then(sum => {
@@ -56,7 +58,14 @@ export function Worklist() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Список пациентов</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Список пациентов</h1>
+          {reflexCount > 0 && (
+            <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-0.5 text-sm font-medium text-amber-800 border border-amber-200" title="Пациенты, которым показан дозаказ ПЦР на HCV-RNA">
+              ХВГ-рефлекс: {reflexCount}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
@@ -159,7 +168,16 @@ export function Worklist() {
                     }}
                     aria-label={`Профиль пациента с MRN ${patient.mrn}`}
                   >
-                    <TableCell className="font-mono font-medium text-slate-900">{patient.mrn}</TableCell>
+                    <TableCell className="font-mono font-medium text-slate-900">
+                      <div className="flex items-center gap-2">
+                        {patient.mrn}
+                        {patient.has_reflex && (
+                          <span title="Показан дозаказ ПЦР">
+                            <AlertCircle className="w-4 h-4 text-amber-500" />
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-slate-700">{patient.age !== null ? patient.age : "—"}</TableCell>
                     <TableCell className="text-slate-700">{sexLabel(patient.sex)}</TableCell>
                     <TableCell><RiskBadge zone={patient.zone} /></TableCell>

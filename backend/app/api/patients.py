@@ -22,6 +22,9 @@ def get_patient(patient_id: int, db: Session = Depends(get_db)) -> PatientCard:
     labs = sorted(patient.labs, key=lambda lab: lab.date)
     scores = sorted(patient.scores, key=lambda score: score.lab_date)
 
+    from app.services.cascade_logic import compute_reflex_flags
+    reflex_flags = compute_reflex_flags(labs)
+
     return PatientCard(
         id=patient.id,
         mrn=patient.mrn,
@@ -29,4 +32,5 @@ def get_patient(patient_id: int, db: Session = Depends(get_db)) -> PatientCard:
         sex=patient.sex,
         labs=labs,
         scores=scores,
+        reflex_flags=reflex_flags,
     )

@@ -1,4 +1,4 @@
-export type Zone = "low" | "grey" | "high";
+export type Zone = "low" | "grey" | "high" | "n/a";
 
 export interface ScanSummary {
   total: number;
@@ -19,6 +19,7 @@ export interface WorklistItem {
   ml_risk: number | null;
   is_lost: boolean;
   last_lab_date: string | null; // ISO date "YYYY-MM-DD"
+  has_reflex: boolean;
 }
 
 export interface WorklistResponse {
@@ -26,6 +27,7 @@ export interface WorklistResponse {
   total: number;
   page: number;
   page_size: number;
+  reflex_count: number;
 }
 
 export interface LabEntry {
@@ -55,6 +57,7 @@ export interface PatientCard {
   sex: number | null;
   labs: LabEntry[];            // LONG-формат: одна строка на аналит
   scores: ScoreEntry[];
+  reflex_flags?: ReflexFlag[];
 }
 
 export interface IngestReport {

@@ -10,9 +10,26 @@ import {
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
+let logoutHandler: (() => void) | null = null;
+
+export function setLogoutHandler(handler: () => void) {
+  logoutHandler = handler;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE}${path}`;
-  const res = await fetch(url, options);
+  const headers = new Headers(options?.headers);
+  
+  const token = localStorage.getItem('heparadar_access_token');
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  const res = await fetch(url, { ...options, headers });
+  
+  if (res.status === 401 && logoutHandler) {
+    logoutHandler();
+  }
   
   if (!res.ok) {
     let errMsg = `Ошибка API: ${res.status}`;
@@ -40,6 +57,18 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export const api = {
   health: async (): Promise<{ status: string }> => {
     return request<{ status: string }>('/health');
+  },
+
+  login: async (credentials: any): Promise<any> => {
+    return request<any>('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    });
+  },
+
+  getMe: async (): Promise<any> => {
+    return request<any>('/auth/me');
   },
 
   scanCohort: async (): Promise<ScanSummary> => {

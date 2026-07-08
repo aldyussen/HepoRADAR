@@ -8,6 +8,7 @@ import { RiskBadge } from "../components/RiskBadge";
 import { TrendChart } from "../components/TrendChart";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { useAuth } from "../lib/auth";
 
 import { ReferralModal } from "../components/ReferralModal";
 import { ReasonList } from "../components/ReasonList";
@@ -140,19 +141,12 @@ function mapExplainResponseToShap(res: ExplainResponse): ShapFactor[] {
 export function PatientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const role = user?.role || "viewer";
   
   const [patient, setPatient] = useState<PatientCard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [role, setRole] = useState(() => localStorage.getItem("heparadar_user_role") || "doctor");
-
-  useEffect(() => {
-    const handleRoleChange = () => {
-      setRole(localStorage.getItem("heparadar_user_role") || "doctor");
-    };
-    window.addEventListener("roleChanged", handleRoleChange);
-    return () => window.removeEventListener("roleChanged", handleRoleChange);
-  }, []);
   const [shapFactors, setShapFactors] = useState<ShapFactor[]>([]);
   const [shapLoading, setShapLoading] = useState(false);
 
@@ -217,26 +211,8 @@ export function PatientDetail() {
     ? [...patient.scores].sort((a, b) => b.lab_date.localeCompare(a.lab_date))[0]
     : undefined;
 
-  // Reflex flags analysis (Anti-HCV positive but no RNA HCV)
-  const reflexFlags: { type: string; msg: string }[] = [];
-  if (patient) {
-    const hasAntiHcv = patient.labs.some(l => {
-      const name = l.analyte.toUpperCase();
-      return name === "ANTI-HCV" || name.includes("ANTI-HCV") || name.includes("HCV-AB") || name.includes("HCV AB") || name.includes("АНТИТЕЛА");
-    });
-    const hasHcvRna = patient.labs.some(l => {
-      const name = l.analyte ? l.analyte.toUpperCase() : "";
-      return name.includes("RNA") || name.includes("РНК") || name.includes("HCV RNA") || name.includes("HCV-RNA");
-    });
-    const shouldDemonstrate = patient.id % 2 === 1 && latestScore && (latestScore.zone === "high" || latestScore.zone === "grey");
-
-    if ((hasAntiHcv && !hasHcvRna) || shouldDemonstrate) {
-      reflexFlags.push({
-        type: "HCV_REFLEX",
-        msg: "Показано дообследование: выявлен высокий риск фиброза (или Anti-HCV+), но отсутствует верифицирующий ПЦР-тест на РНК. Рекомендован автоматический дозаказ исследования РНК HCV (Reflex-тест) из той же сыворотки крови без вызова пациента."
-      });
-    }
-  }
+  // Reflex flags analysis from backend
+  const reflexFlags = patient.reflex_flags || [];
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
