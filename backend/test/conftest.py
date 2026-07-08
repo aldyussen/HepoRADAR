@@ -43,11 +43,30 @@ def client():
     return TestClient(app)
 
 
-@pytest.fixture()
-def doctor_headers(client, db_session):
+def _login_headers(client, db_session, username: str, password: str) -> dict[str, str]:
     from app.db.seed import seed_users
 
     seed_users(db_session)
-    response = client.post("/auth/login", json={"username": "doctor", "password": "doctor123"})
+    response = client.post("/auth/login", json={"username": username, "password": password})
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture()
+def doctor_headers(client, db_session):
+    return _login_headers(client, db_session, "doctor", "doctor123")
+
+
+@pytest.fixture()
+def coordinator_headers(client, db_session):
+    return _login_headers(client, db_session, "coordinator", "coordinator123")
+
+
+@pytest.fixture()
+def admin_headers(client, db_session):
+    return _login_headers(client, db_session, "admin", "admin123")
+
+
+@pytest.fixture()
+def viewer_headers(client, db_session):
+    return _login_headers(client, db_session, "viewer", "viewer123")
