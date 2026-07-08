@@ -128,7 +128,7 @@ export function PatientDetail() {
                           <TableCell className="font-medium">{score.fib4 !== null ? score.fib4.toFixed(2) : "—"}</TableCell>
                           <TableCell>{score.apri !== null ? score.apri.toFixed(2) : "—"}</TableCell>
                           <TableCell>{score.de_ritis !== null ? score.de_ritis.toFixed(2) : "—"}</TableCell>
-                          <TableCell>{score.ml_risk !== null ? (score.ml_risk * 100).toFixed(0) + "%" : "—"}</TableCell>
+                          <TableCell>{score.ml_risk !== null ? (score.ml_risk * 100).toFixed(0) + "%" : "н/д"}</TableCell>
                           <TableCell className="text-xs text-red-500 font-mono">{score.quality_flags || "—"}</TableCell>
                         </TableRow>
                       ))}
@@ -179,7 +179,7 @@ export function PatientDetail() {
                     <div>
                       <p className="text-xs text-slate-500 uppercase font-medium">Вероятность ML</p>
                       <p className="text-base font-semibold text-slate-800">
-                        {latestScore.ml_risk !== null ? (latestScore.ml_risk * 100).toFixed(0) + "%" : "—"}
+                        {latestScore.ml_risk !== null ? (latestScore.ml_risk * 100).toFixed(0) + "%" : "н/д"}
                       </p>
                     </div>
                   </div>

@@ -4,6 +4,8 @@ import { Topbar } from './components/Topbar';
 import { Worklist } from './pages/Worklist';
 import { PatientDetail } from './pages/PatientDetail';
 import { Ingest } from './pages/Ingest';
+import { ScanPage } from './pages/ScanPage';
+import { CohortPage } from './pages/CohortPage';
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -23,11 +25,13 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/worklist" replace />} />
+        <Route path="/" element={<Navigate to="/scan" replace />} />
+        <Route path="/scan" element={<Layout><ScanPage /></Layout>} />
         <Route path="/worklist" element={<Layout><Worklist /></Layout>} />
         <Route path="/patients/:id" element={<Layout><PatientDetail /></Layout>} />
+        <Route path="/cohort" element={<Layout><CohortPage /></Layout>} />
         <Route path="/ingest" element={<Layout><Ingest /></Layout>} />
-        <Route path="*" element={<Navigate to="/worklist" replace />} />
+        <Route path="*" element={<Navigate to="/scan" replace />} />
       </Routes>
     </BrowserRouter>
   );

@@ -4,7 +4,7 @@ import { api } from "../api";
 import { WorklistItem, Zone, ScanSummary, sexLabel } from "../types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { RiskBadge } from "../components/RiskBadge";
-import { Activity, Play, AlertCircle, RefreshCw } from "lucide-react";
+import { Activity, AlertCircle } from "lucide-react";
 import { Button } from "../components/ui/button";
 
 export function Worklist() {
@@ -20,9 +20,17 @@ export function Worklist() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
-  const [scanSummary, setScanSummary] = useState<ScanSummary | null>(null);
-  const [scanning, setScanning] = useState(false);
-  const [scanError, setScanError] = useState("");
+  const [scanSummary] = useState<ScanSummary | null>(() => {
+    const saved = localStorage.getItem("heparadar_scan_summary");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
 
   const navigate = useNavigate();
 
@@ -45,23 +53,12 @@ export function Worklist() {
 
   // Fetch when page or filters change
   useEffect(() => {
-    fetchWorklist();
-  }, [fetchWorklist]);
-
-  const handleScan = async () => {
-    setScanning(true);
-    setScanError("");
-    try {
-      const summary = await api.scanCohort();
-      setScanSummary(summary);
-      setPage(1);
+    if (scanSummary) {
       fetchWorklist();
-    } catch (e: any) {
-      setScanError(e.message || "Ошибка запуска сканирования");
-    } finally {
-      setScanning(false);
+    } else {
+      setLoading(false);
     }
-  };
+  }, [fetchWorklist, scanSummary]);
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -69,51 +66,7 @@ export function Worklist() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">Список пациентов</h1>
-        <Button 
-          onClick={handleScan} 
-          disabled={scanning}
-          className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
-        >
-          {scanning ? (
-            <RefreshCw className="w-4 h-4 animate-spin" />
-          ) : (
-            <Play className="w-4 h-4" />
-          )}
-          {scanning ? "Сканирование..." : "Сканировать когорту"}
-        </Button>
       </div>
-
-      {scanError && (
-        <div className="p-4 bg-red-50 text-red-700 border border-red-200 rounded-lg flex items-center gap-2">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <span>{scanError}</span>
-        </div>
-      )}
-
-      {scanSummary && (
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 bg-blue-50 border border-blue-100 p-4 rounded-xl">
-          <div>
-            <p className="text-xs text-slate-500 uppercase font-medium">Всего обработано</p>
-            <p className="text-2xl font-bold text-slate-950">{scanSummary.total}</p>
-          </div>
-          <div>
-            <p className="text-xs text-red-500 uppercase font-medium">Высокий риск</p>
-            <p className="text-2xl font-bold text-red-600">{scanSummary.high}</p>
-          </div>
-          <div>
-            <p className="text-xs text-amber-500 uppercase font-medium">Серая зона</p>
-            <p className="text-2xl font-bold text-amber-600">{scanSummary.grey}</p>
-          </div>
-          <div>
-            <p className="text-xs text-emerald-500 uppercase font-medium">Низкий риск</p>
-            <p className="text-2xl font-bold text-emerald-600">{scanSummary.low}</p>
-          </div>
-          <div>
-            <p className="text-xs text-indigo-500 uppercase font-medium">Утеряно связей</p>
-            <p className="text-2xl font-bold text-indigo-600">{scanSummary.lost_count}</p>
-          </div>
-        </div>
-      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4 items-center bg-slate-50 p-4 rounded-lg border border-slate-100">
@@ -163,6 +116,15 @@ export function Worklist() {
         <div className="p-4 bg-red-50 text-red-700 rounded-lg">
           Ошибка загрузки списка: {error}
         </div>
+      ) : !scanSummary ? (
+        <div className="flex flex-col items-center justify-center h-64 text-slate-500 border border-dashed rounded-lg bg-white p-8 text-center">
+          <AlertCircle className="w-12 h-12 mb-4 text-slate-300 animate-pulse" />
+          <p className="font-semibold text-slate-700 mb-1">База данных не отсканирована</p>
+          <p className="text-sm max-w-sm mb-4">Для отображения списка потерянных пациентов необходимо запустить сканирование когорты.</p>
+          <Button onClick={() => navigate("/scan")} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl">
+            Перейти к сканированию
+          </Button>
+        </div>
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64 text-slate-500 border border-dashed rounded-lg bg-white p-8 text-center">
           <AlertCircle className="w-12 h-12 mb-4 text-slate-300" />
@@ -204,7 +166,7 @@ export function Worklist() {
                       {patient.apri !== null ? patient.apri.toFixed(2) : "—"}
                     </TableCell>
                     <TableCell className="text-slate-700">
-                      {patient.ml_risk !== null ? (patient.ml_risk * 100).toFixed(0) + "%" : "—"}
+                      {patient.ml_risk !== null ? (patient.ml_risk * 100).toFixed(0) + "%" : "н/д"}
                     </TableCell>
                     <TableCell className="text-slate-500 font-mono text-xs">
                       {patient.last_lab_date || "—"}

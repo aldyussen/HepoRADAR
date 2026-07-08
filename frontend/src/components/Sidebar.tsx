@@ -1,11 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Users, Upload, Activity } from 'lucide-react';
+import { Users, Upload, Activity, Search, BarChart3 } from 'lucide-react';
 
 export function Sidebar() {
   const location = useLocation();
 
   const links = [
-    { name: 'Пациенты', path: '/worklist', icon: Users },
+    { name: 'Сканирование когорты', path: '/scan', icon: Search },
+    { name: 'Список пациентов', path: '/worklist', icon: Users },
+    { name: 'Обзор когорты', path: '/cohort', icon: BarChart3 },
     { name: 'Загрузка CSV', path: '/ingest', icon: Upload },
   ];
 
