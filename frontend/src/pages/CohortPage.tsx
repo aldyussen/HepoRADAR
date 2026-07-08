@@ -125,13 +125,13 @@ export function CohortPage() {
         <Card className="decoration-red-500 decoration-2 border-t-2">
           <Text className="text-slate-500 text-xs font-semibold uppercase">Высокий риск</Text>
           <Title className="text-3xl font-bold mt-1 text-red-600">{summary.high}</Title>
-          <Text className="text-slate-400 text-xs mt-1">Доля: {getPercent(summary.high)} от пациентов с FIB-4</Text>
+          <Text className="text-slate-400 text-xs mt-1">Доля: {getPercent(summary.high)} от пациентов с FIB-4 ({totalRisky} из {summary.total})</Text>
         </Card>
 
         <Card className="decoration-amber-500 decoration-2 border-t-2">
           <Text className="text-slate-500 text-xs font-semibold uppercase">Серая зона</Text>
           <Title className="text-3xl font-bold mt-1 text-amber-600">{summary.grey}</Title>
-          <Text className="text-slate-400 text-xs mt-1">Доля: {getPercent(summary.grey)} от пациентов с FIB-4</Text>
+          <Text className="text-slate-400 text-xs mt-1">Доля: {getPercent(summary.grey)} от пациентов с FIB-4 ({totalRisky} из {summary.total})</Text>
         </Card>
 
         <Card className="decoration-indigo-500 decoration-2 border-t-2">
