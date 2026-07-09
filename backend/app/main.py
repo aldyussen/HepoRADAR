@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import cascade, cohort, explain, ingest, patients, referral
+from app.api import cascade, cohort, explain, ingest, patients, referral, quickcheck
 from app.auth import router as auth_router
 from app.config import settings
 
@@ -24,6 +24,7 @@ def create_app() -> FastAPI:
     app.include_router(explain.router)
     app.include_router(cascade.router)
     app.include_router(referral.router)
+    app.include_router(quickcheck.router)
 
     @app.get("/health")
     def health():

@@ -119,4 +119,23 @@ export const api = {
   getHcvCascade: async (): Promise<CascadeStage[]> => {
     return request<CascadeStage[]>('/cascade/hcv');
   },
+
+  quickExtract: async (files: File[]): Promise<any> => {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    // Notice we do NOT pass the token by omitting options or doing a custom fetch.
+    // Wait, request() automatically adds the token, which is fine since the backend route is public and ignores the token if present.
+    return request<any>('/quick/extract', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+
+  quickCheck: async (payload: any): Promise<any> => {
+    return request<any>('/quick/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  },
 };

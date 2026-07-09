@@ -8,6 +8,7 @@ this module never returns a partial or best-effort referral.
 
 import logging
 
+import json
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -74,3 +75,46 @@ def generate_referral(
         raise RuntimeError("Gemini returned an empty response")
 
     return text.strip()
+
+def extract_labs_from_images(image_bytes_list: list[bytes], mime_types: list[str]) -> dict:
+    """Extract lab values from images using Gemini Vision."""
+    if not settings.gemini_api_key:
+        raise RuntimeError("Gemini API key not configured")
+
+    from google import genai
+    from google.genai import types
+    from pydantic import BaseModel, Field
+
+    class ExtractedLabs(BaseModel):
+        age: int | None = Field(description="Patient age if present")
+        sex: int | None = Field(description="Patient sex (1 for male, 0 for female) if present")
+        ast: float | None = Field(description="AST value if present")
+        alt: float | None = Field(description="ALT value if present")
+        plt: float | None = Field(description="Platelets (PLT) value if present")
+        anti_hcv_pos: bool | None = Field(description="True if anti-HCV positive is indicated")
+        hcv_rna_done: bool | None = Field(description="True if HCV RNA (PCR) test was done")
+        status: str = Field(description="'ok' if at least some values are readable, 'unreadable' if not a lab report or completely blurry")
+        hint: str | None = Field(description="Hint for the user if unreadable")
+
+    client = genai.Client(api_key=settings.gemini_api_key)
+    
+    parts = ["Extract these values from the lab report image(s). Return JSON."]
+    for img_bytes, mime_type in zip(image_bytes_list, mime_types):
+        parts.append(
+            types.Part.from_bytes(data=img_bytes, mime_type=mime_type)
+        )
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=parts,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=ExtractedLabs,
+        )
+    )
+
+    text = getattr(response, "text", None)
+    if not text or not text.strip():
+        raise RuntimeError("Gemini returned an empty response")
+
+    return json.loads(text.strip())

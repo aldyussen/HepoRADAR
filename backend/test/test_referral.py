@@ -81,10 +81,13 @@ def test_referral_falls_back_to_template_when_llm_raises(client, doctor_headers,
     assert "zone" in body["content"]
 
 
-def test_referral_template_fallback_alone_without_any_llm_mocking(client, doctor_headers):
+def test_referral_template_fallback_alone_without_any_llm_mocking(client, doctor_headers, monkeypatch):
     """No gemini_api_key configured in tests -> llm_client raises naturally,
     so this exercises the template path with zero mocking of generate_referral.
     """
+    from app.config import settings
+    monkeypatch.setattr(settings, "gemini_api_key", None)
+    
     patient_id = _ingest_and_scan(client, doctor_headers, "P3")
 
     response = client.post(f"/patients/{patient_id}/referral", headers=doctor_headers)

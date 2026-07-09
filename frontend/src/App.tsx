@@ -9,6 +9,7 @@ import { CohortPage } from './pages/CohortPage';
 import { CascadePage } from './pages/CascadePage';
 import { Login } from './pages/Login';
 import { AuthProvider, useAuth } from './lib/auth';
+import { QuickCheck } from './pages/QuickCheck';
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -44,6 +45,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/check" element={<QuickCheck />} />
           <Route path="/" element={<Navigate to="/scan" replace />} />
           <Route path="/scan" element={<ProtectedRoute><Layout><ScanPage /></Layout></ProtectedRoute>} />
           <Route path="/worklist" element={<ProtectedRoute><Layout><Worklist /></Layout></ProtectedRoute>} />
