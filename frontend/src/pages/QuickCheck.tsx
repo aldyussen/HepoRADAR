@@ -113,7 +113,7 @@ export function QuickCheck() {
               onChange={handleUpload}
             />
             <Button 
-              className="w-full h-16 text-lg gap-3 bg-slate-900 hover:bg-slate-800" 
+              className="w-full h-16 text-lg gap-3 bg-slate-700 hover:bg-slate-600 text-white" 
               onClick={() => fileInputRef.current?.click()}
               disabled={loading}
             >
@@ -234,11 +234,13 @@ export function QuickCheck() {
         {/* Results */}
         {result && (
           <div className="space-y-4">
-            {result.status === "incomplete" ? (
+            {result.status === "incomplete" || result.status === "invalid" ? (
               <Card className="border-orange-200 bg-orange-50">
                 <CardContent className="pt-6 text-center space-y-3">
                   <AlertTriangle className="w-10 h-10 text-orange-500 mx-auto" />
-                  <h3 className="font-bold text-orange-900">Недостаточно данных</h3>
+                  <h3 className="font-bold text-orange-900">
+                    {result.status === "invalid" ? "Неверные значения" : "Недостаточно данных"}
+                  </h3>
                   <p className="text-sm text-orange-800">{result.message}</p>
                 </CardContent>
               </Card>
@@ -254,9 +256,23 @@ export function QuickCheck() {
 
                   <div className="text-center space-y-2 border-b pb-6">
                     <p className="text-sm text-slate-500 uppercase font-bold tracking-wider">Зона риска фиброза</p>
-                    <div className="flex justify-center scale-150 py-2">
-                      <RiskBadge zone={result.zone} />
-                    </div>
+                    
+                    {result.critical_flags && result.critical_flags.length > 0 ? (
+                      <div className="bg-red-100 text-red-800 p-4 rounded-md border border-red-200 flex flex-col items-center gap-2 mt-4">
+                        <AlertTriangle className="w-8 h-8 text-red-600" />
+                        <span className="font-bold uppercase tracking-wider text-sm">Критическая зона</span>
+                        <ul className="text-sm list-disc list-inside">
+                          {result.critical_flags.map((flag: string, idx: number) => (
+                            <li key={idx}>{flag}</li>
+                          ))}
+                        </ul>
+                        <span className="text-xs font-semibold mt-2 px-3 py-1 bg-red-200 rounded-full">Требуется срочная оценка врача</span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-center scale-150 py-2">
+                        <RiskBadge zone={result.zone} />
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 text-center divide-x">
@@ -283,7 +299,23 @@ export function QuickCheck() {
                   {result.factors && result.factors.length > 0 && (
                     <div className="pt-4">
                       <p className="text-xs font-bold text-slate-500 uppercase mb-2">Ключевые факторы</p>
-                      <ReasonList reasons={result.factors.map((f: any) => `Показатель ${f.feature} (${f.value}) отклоняется от нормы, увеличивая риск.`)} />
+                      <ReasonList reasons={result.factors.map((f: any) => {
+                        const effectText = f.direction === "decreases risk" 
+                          ? "снижая расчетный показатель FIB-4." 
+                          : "увеличивая риск (FIB-4).";
+                        return `Показатель ${f.feature} (${f.value}) отклоняется от нормы, ${effectText}`;
+                      })} />
+                    </div>
+                  )}
+
+                  {result.warnings && result.warnings.length > 0 && (
+                    <div className="pt-2">
+                      {result.warnings.map((warn: string, idx: number) => (
+                        <div key={idx} className="bg-orange-50 text-orange-800 p-3 rounded-md text-xs border border-orange-100 flex gap-2">
+                          <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                          <p>{warn}</p>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </CardContent>

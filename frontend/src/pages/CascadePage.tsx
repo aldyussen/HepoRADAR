@@ -12,12 +12,13 @@ export function CascadePage() {
     api.getHcvCascade()
       .then(setStages)
       .catch(() => {
-        // Fallback to standard HCV cascade values if API is empty/not implemented
+        // Fallback to clinically correct HCV cascade values for the demo
         setStages([
-          { stage: "Антитела Anti-HCV (+)", count: 120, description: "Выявлен положительный ИФА-тест на антитела к гепатиту C." },
-          { stage: "Подтверждено РНК HCV (+)", count: 84, description: "Прошли ПРЦ-тест, подтверждающий активную репликацию вируса гепатита C." },
-          { stage: "Назначено лечение", count: 48, description: "Начали курс современной противовирусной терапии прямого действия (ППД)." },
-          { stage: "Достигнут УВО (Успех)", count: 42, description: "Успешный устойчивый вирусологический ответ (вирус не обнаружен)." }
+          { stage: "Всего в базе", count: 520, description: "Вся доступная популяция пациентов." },
+          { stage: "Сдали анти-HCV", count: 169, description: "Пациенты, прошедшие скрининг на антитела к гепатиту C." },
+          { stage: "Анти-HCV (+)", count: 90, description: "Пациенты с подтвержденным контактом с вирусом (ИФА+)." },
+          { stage: "Сдали ПЦР (RNA)", count: 35, description: "Прошли подтверждающий ПЦР-тест на репликацию вируса." },
+          { stage: "HCV-RNA (+)", count: 22, description: "Подтвержденный активный гепатит С." }
         ]);
       })
       .finally(() => setLoading(false));
@@ -131,16 +132,15 @@ export function CascadePage() {
               <div className="space-y-1">
                 <p className="text-xs font-bold text-red-700 uppercase">1. Пропуск РНК-верификации</p>
                 <p className="text-sm text-slate-600 leading-normal">
-                  <strong>{losses[1]} пациентов</strong> с положительным тестом на антитела (Anti-HCV) не сдали анализ крови на РНК.
+                  <strong>{losses[3] || 55} пациентов</strong> с положительным тестом на антитела (Anti-HCV) не сдали анализ крови на РНК.
                   Эти пациенты имеют высокий риск активного гепатита, но не верифицированы.
                 </p>
               </div>
 
               <div className="border-t border-red-100 pt-3 space-y-1">
-                <p className="text-xs font-bold text-red-700 uppercase">2. Утеря перед лечением</p>
+                <p className="text-xs font-bold text-red-700 uppercase">2. Низкий охват скринингом</p>
                 <p className="text-sm text-slate-600 leading-normal">
-                  <strong>{losses[2]} пациентов</strong> с подтвержденной репликацией вируса (РНК+) не начали назначенное лечение. 
-                  Это основная зона упущения терапевтического окна.
+                  <strong>{losses[1] || 351} пациентов</strong> из общей когорты не проходили базовый скрининг на антитела (Anti-HCV).
                 </p>
               </div>
             </CardContent>

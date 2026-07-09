@@ -41,17 +41,28 @@ def de_ritis(ast: float | None, alt: float | None) -> float | None:
     return ast / alt
 
 
-def zone(fib4_val: float | None, age: float | None = None) -> Zone | None:
+def zone(fib4_val: float | None, age: float | None = None, ast: float | None = None, alt: float | None = None) -> Zone | None:
     """Map a FIB-4 value to a risk zone using thresholds from config.
 
     `age` is accepted for the >65 caveat noted in the plan but does not
     change the cutoffs here — standard adult cutoffs are used uniformly.
     """
-    if age is not None and age < 35:
+    if age is not None:
+        if age < 18:
+            return "n/a"
+        if age < 35:
+            return "n/a"
+            
+    if (ast is not None and ast > 500) or (alt is not None and alt > 500):
         return "n/a"
     if fib4_val is None:
         return None
-    if fib4_val < settings.fib4_low_max:
+        
+    low_cutoff = settings.fib4_low_max
+    if age is not None and age >= 65:
+        low_cutoff = 2.00
+        
+    if fib4_val < low_cutoff:
         return "low"
     if fib4_val > settings.fib4_high_min:
         return "high"
@@ -104,8 +115,12 @@ def rule_based_factors(row: dict, max_factors: int = 3) -> list[dict]:
             magnitude = (threshold - value) / threshold
         else:
             continue
+        # For FIB-4, high ALT actually decreases the score (since it's in the denominator).
+        # We reflect this mathematically in the rule-based explanation.
+        dir_str = "decreases risk" if feature == "alt" and direction == "high" else "increases risk"
+        
         factors.append(
-            {"feature": feature, "value": value, "shap": round(magnitude, 3), "direction": "increases risk"}
+            {"feature": feature, "value": value, "shap": round(magnitude, 3), "direction": dir_str}
         )
 
     factors.sort(key=lambda f: f["shap"], reverse=True)
@@ -132,14 +147,17 @@ def score_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     apri_vals = apri_vals.where(valid)
     de_ritis_vals = de_ritis_vals.where(valid)
 
-    zone_vals = pd.Series(
-        np.select(
-            [fib4_vals < settings.fib4_low_max, fib4_vals > settings.fib4_high_min],
-            ["low", "high"],
-            default="grey",
-        ),
-        index=df.index,
-    )
+    zone_vals = pd.Series("grey", index=df.index)
+    
+    # Vectorized logic for geriatric thresholds
+    mask_elderly = (age >= 65)
+    mask_standard = (age < 65) | age.isna()
+    
+    zone_vals = np.where(mask_elderly & (fib4_vals < 2.0), "low", zone_vals)
+    zone_vals = np.where(mask_standard & (fib4_vals < settings.fib4_low_max), "low", zone_vals)
+    zone_vals = np.where(fib4_vals > settings.fib4_high_min, "high", zone_vals)
+    
+    zone_vals = pd.Series(zone_vals, index=df.index)
     zone_vals = zone_vals.where(fib4_vals.notna(), None)
 
     out = df.copy()
@@ -149,10 +167,23 @@ def score_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     out["zone"] = zone_vals
     out["quality_flags"] = ""
     
-    # Age < 35 gate
-    mask_young = out["age"] < 35
+    # Age < 18 gate
+    mask_pediatric = out["age"] < 18
+    if mask_pediatric.any():
+        out.loc[mask_pediatric, "zone"] = "n/a"
+        out.loc[mask_pediatric, "quality_flags"] = "FIB-4 не применим в педиатрии (<18 лет)"
+        
+    # Age 18-34 gate
+    mask_young = (out["age"] >= 18) & (out["age"] < 35)
     if mask_young.any():
         out.loc[mask_young, "zone"] = "n/a"
-        out.loc[mask_young, "quality_flags"] = "FIB-4 не валидирован <35 лет"
+        out.loc[mask_young, "quality_flags"] = out.loc[mask_young, "quality_flags"].astype(str) + " | FIB-4 не валидирован <35 лет (Н/Д)"
+        out.loc[mask_young, "quality_flags"] = out.loc[mask_young, "quality_flags"].str.lstrip(" | ")
+        
+    # Acute liver injury gate
+    mask_acute = (out["ast"] > 500) | (out["alt"] > 500)
+    if mask_acute.any():
+        out.loc[mask_acute, "zone"] = "n/a"
+        out.loc[mask_acute, "quality_flags"] = out.loc[mask_acute, "quality_flags"].astype(str) + " | FIB-4 не применим при АСТ/АЛТ > 500"
         
     return out
