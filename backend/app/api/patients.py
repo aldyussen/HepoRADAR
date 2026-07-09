@@ -23,6 +23,7 @@ def get_patient(patient_id: int, db: Session = Depends(get_db)) -> PatientCard:
     db_scores = {s.lab_date: s for s in patient.scores}
 
     import pandas as pd
+    from datetime import datetime
     from app.services.scoring import score_dataframe
     from app.schemas.patient import ScoreEntry
 
@@ -57,7 +58,8 @@ def get_patient(patient_id: int, db: Session = Depends(get_db)) -> PatientCard:
                 zone=row["zone"] if pd.notna(row["zone"]) else None,
                 ml_risk=db_s.ml_risk if db_s else None,
                 is_lost=db_s.is_lost if db_s else False,
-                quality_flags=str(row["quality_flags"]) if pd.notna(row["quality_flags"]) else ""
+                quality_flags=str(row["quality_flags"]) if pd.notna(row["quality_flags"]) else "",
+                computed_at=db_s.computed_at if db_s else datetime.utcnow()
             )
 
     # Add any db scores that were missed (if any)
@@ -71,7 +73,8 @@ def get_patient(patient_id: int, db: Session = Depends(get_db)) -> PatientCard:
                 zone=s.zone,
                 ml_risk=s.ml_risk,
                 is_lost=s.is_lost,
-                quality_flags=s.quality_flags or ""
+                quality_flags=s.quality_flags or "",
+                computed_at=s.computed_at
             )
 
     scores = sorted(scores_dict.values(), key=lambda s: s.lab_date)
