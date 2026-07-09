@@ -18,8 +18,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>({ id: 1, username: 'doctor', role: 'doctor' });
-  const [token, setToken] = useState<string | null>('dummy_token');
+  const [user, setUser] = useState<User | null>(() => {
+    const role = localStorage.getItem('heparadar_user_role') || 'doctor';
+    const username = localStorage.getItem('heparadar_user_name') || 'doctor';
+    return { id: 1, username, role };
+  });
+  const [token, setToken] = useState<string | null>(() => {
+    return localStorage.getItem('heparadar_access_token') || 'dummy_token';
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   const logout = () => {
