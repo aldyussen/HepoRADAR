@@ -8,3 +8,4 @@ __pycache__/
 backend/dev.db
 *.db
 frontend/.env
+backend/.env
