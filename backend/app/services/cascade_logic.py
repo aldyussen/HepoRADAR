@@ -71,3 +71,29 @@ def cascade_funnel(cohort_stages: Sequence[Iterable[str] | None]) -> dict[str, i
         at_or_beyond = CASCADE_STAGES[index:]
         funnel[stage] = int(sum(counts_by_stage.get(s, 0) for s in at_or_beyond))
     return funnel
+
+
+def compute_reflex_flags(patient_labs):
+    flags = []
+    has_anti_hcv_pos = False
+    has_hcv_rna = False
+    
+    for lab in patient_labs:
+        analyte = (lab.analyte or "").upper()
+        
+        if analyte == "ANTI_HCV" or "ANTI-HCV" in analyte or "HCV AB" in analyte or "HCV_AB" in analyte:
+            val_str = str(lab.value).lower() if lab.value is not None else ""
+            if val_str in ("1", "1.0", "positive", "pos", "+", "положит", "true") or (lab.value and float(lab.value) > 0):
+                has_anti_hcv_pos = True
+                
+        if analyte == "HCV_RNA" or "HCV RNA" in analyte or "HCV-RNA" in analyte or "РНК" in analyte.upper():
+            has_hcv_rna = True
+            
+    if has_anti_hcv_pos and not has_hcv_rna:
+        flags.append({
+            "type": "HCV_RNA_MISSING",
+            "severity": "action",
+            "msg": "Anti-HCV(+) без HCV-RNA — требуется дозаказ ПЦР для подтверждения ХВГ"
+        })
+        
+    return flags

@@ -25,6 +25,7 @@ def get_patient(patient_id: int, db: Session = Depends(get_db)) -> PatientCard:
     import datetime as dt
 
     import pandas as pd
+    from datetime import datetime
     from app.services.scoring import score_dataframe
     from app.schemas.patient import ScoreEntry
 
