@@ -23,6 +23,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/app ./app
 COPY ml ./ml
 
+ENV HEPARADAR_MODEL_PATH=/app/ml/models/greyzone_model.pkl
+ENV HEPARADAR_SHAP_EXPLAINER_PATH=/app/ml/models/shap_explainer.pkl
+ENV HEPARADAR_FEATURE_ORDER_PATH=/app/ml/models/feature_order.json
+
 # Копируем собранный фронтенд
 COPY --from=frontend-builder /app/frontend/dist /frontend/dist
 
