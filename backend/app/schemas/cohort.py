@@ -24,7 +24,6 @@ class WorklistItem(BaseModel):
     last_lab_date: dt.date | None
     risk: float | None
     completeness: float | None
-    has_reflex: bool = False
 
 
 class WorklistResponse(BaseModel):
@@ -32,4 +31,3 @@ class WorklistResponse(BaseModel):
     total: int
     page: int
     page_size: int
-    reflex_count: int = 0

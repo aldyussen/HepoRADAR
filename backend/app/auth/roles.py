@@ -23,14 +23,22 @@ def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> User:
-    if not credentials:
-        return User(id=1, username="admin", role="admin", is_active=True)
+    if credentials is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+
     try:
         claims = decode_token(credentials.credentials)
-        role = claims.get("role", "admin")
-        return User(id=1, username=role, role=role, is_active=True)
-    except Exception:
-        return User(id=1, username="admin", role="admin", is_active=True)
+    except jwt.PyJWTError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token") from exc
+
+    if claims.get("type") != "access":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
+
+    user = db.query(User).filter(User.id == int(claims["sub"])).one_or_none()
+    if user is None or not user.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+
+    return user
 
 
 def require_role(*allowed: Role):

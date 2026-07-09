@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import cohort, explain, ingest, patients, cascade, referral
+from app.api import cascade, cohort, explain, ingest, patients, referral
 from app.auth import router as auth_router
 from app.config import settings
 

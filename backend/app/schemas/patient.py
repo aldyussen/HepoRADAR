@@ -34,5 +34,4 @@ class PatientCard(BaseModel):
     sex: int | None
     labs: list[LabEntry]
     scores: list[ScoreEntry]
-    reflex_flags: list[dict] = []
 

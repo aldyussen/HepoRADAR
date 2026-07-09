@@ -28,6 +28,8 @@ class Settings(BaseSettings):
 
     # LLM / RAG (B3)
     llm_url: str = ""
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-flash-latest"
 
     # Auth (B5)
     jwt_secret: str = "change-me-in-prod-this-default-is-not-secret-32bytes"

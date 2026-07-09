@@ -22,10 +22,13 @@ def get_patient(patient_id: int, db: Session = Depends(get_db)) -> PatientCard:
     labs = sorted(patient.labs, key=lambda lab: lab.date)
     db_scores = {s.lab_date: s for s in patient.scores}
 
+    import datetime as dt
+
     import pandas as pd
     from app.services.scoring import score_dataframe
     from app.schemas.patient import ScoreEntry
 
+    now = dt.datetime.now(dt.timezone.utc)
     scores_dict = {}
     labs_data = [{"analyte": l.analyte, "value": l.value, "date": l.date} for l in labs if l.analyte in ("AST", "ALT", "PLT", "BILIRUBIN", "ALBUMIN")]
     
@@ -57,7 +60,8 @@ def get_patient(patient_id: int, db: Session = Depends(get_db)) -> PatientCard:
                 zone=row["zone"] if pd.notna(row["zone"]) else None,
                 ml_risk=db_s.ml_risk if db_s else None,
                 is_lost=db_s.is_lost if db_s else False,
-                quality_flags=str(row["quality_flags"]) if pd.notna(row["quality_flags"]) else ""
+                quality_flags=str(row["quality_flags"]) if pd.notna(row["quality_flags"]) else "",
+                computed_at=db_s.computed_at if db_s else now,
             )
 
     # Add any db scores that were missed (if any)
@@ -71,13 +75,11 @@ def get_patient(patient_id: int, db: Session = Depends(get_db)) -> PatientCard:
                 zone=s.zone,
                 ml_risk=s.ml_risk,
                 is_lost=s.is_lost,
-                quality_flags=s.quality_flags or ""
+                quality_flags=s.quality_flags or "",
+                computed_at=s.computed_at,
             )
 
     scores = sorted(scores_dict.values(), key=lambda s: s.lab_date)
-
-    from app.services.cascade_logic import compute_reflex_flags
-    reflex_flags = compute_reflex_flags(labs)
 
     return PatientCard(
         id=patient.id,
@@ -86,5 +88,4 @@ def get_patient(patient_id: int, db: Session = Depends(get_db)) -> PatientCard:
         sex=patient.sex,
         labs=labs,
         scores=scores,
-        reflex_flags=reflex_flags,
     )

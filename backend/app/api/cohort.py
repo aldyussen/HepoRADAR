@@ -41,19 +41,12 @@ def worklist(
         if score.patient_id not in latest_by_patient:
             latest_by_patient[score.patient_id] = score
 
-    from app.services.cascade_logic import compute_reflex_flags
-
     candidates = []
-    reflex_count = 0
     for score in latest_by_patient.values():
+        if not score.is_lost:
+            continue
         patient = score.patient
-        
-        # Check reflex flag for all patients in DB to get global count
-        flags = compute_reflex_flags(patient.labs)
-        has_reflex = any(f["type"] == "HCV_RNA_MISSING" for f in flags)
-        if has_reflex:
-            reflex_count += 1
-            
+
         if zone is not None and score.zone != zone:
             continue
         if age_min is not None and (patient.age is None or patient.age < age_min):
@@ -75,7 +68,6 @@ def worklist(
                 "last_lab_date": score.lab_date,
                 "risk": score.fib4,
                 "completeness": 1.0,
-                "has_reflex": has_reflex,
             }
         )
 
@@ -89,5 +81,4 @@ def worklist(
         total=total,
         page=page,
         page_size=page_size,
-        reflex_count=reflex_count,
     )

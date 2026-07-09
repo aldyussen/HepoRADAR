@@ -40,10 +40,13 @@ class MeResponse(BaseModel):
 
 @router.post("/login", response_model=TokenResponse)
 def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
-    # DEMO BYPASS: Always succeed
+    user = db.query(User).filter(User.username == payload.username).one_or_none()
+    if user is None or not user.is_active or not pwd_context.verify(payload.password, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
     return TokenResponse(
-        access_token=create_access_token("1", payload.username),
-        refresh_token=create_refresh_token("1"),
+        access_token=create_access_token(str(user.id), user.role),
+        refresh_token=create_refresh_token(str(user.id)),
     )
 
 
